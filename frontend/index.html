@@ -940,7 +940,7 @@ html,body{height:100%;overflow:hidden;background:var(--void);color:var(--ink1);f
    CONFIG & STATE
 ═══════════════════════════════════════════════════════════════ */
 const cfg = {
-  backend: 'http://localhost:8000',
+  backend: window.location.protocol.startsWith('http') ? window.location.origin : 'http://localhost:8000',
   model:   'claude-sonnet-4-20250514',
   maxLen:  4000,
 };
@@ -1321,8 +1321,13 @@ async function send(){
         }),
         signal:AbortSignal.timeout(30000),
       });
+      if(!res.ok){
+        const errorText = await res.text().catch(()=>res.statusText || 'Unknown error');
+        throw new Error(`Backend error ${res.status}: ${errorText}`);
+      }
       const d=await res.json();
-      reply=d.response; timing=d.processing_time;
+      reply=d.response || 'I did not receive a response from the assistant.';
+      timing=d.processing_time;
       if(d.multimodal_context?.has_image) tags.push('vision');
       if(d.multimodal_context?.intent)    tags.push(d.multimodal_context.intent);
     }catch{
@@ -1418,12 +1423,6 @@ If shown an image, describe and analyze it carefully.`,
   }
   const d=await res.json();
   return d.content?.[0]?.text||'I am ready to help — please try again.';
-}
-
-    else{ toast('Backend returned error '+r.status,'error'); }
-  }catch{
-    toast('Backend not reachable — start the server','error');
-  }
 }
 
 function useChip(text){ document.getElementById('msg-in').value=text; send(); }

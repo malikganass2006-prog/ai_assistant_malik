@@ -194,5 +194,19 @@
       "content": "To open Google Chrome, you can follow these steps:\n\n1. **Windows**: Press the Windows key + R to open the Run dialog box, type \"chrome\", and press Enter.\n2. **Mac**: Use Spotlight to search for \"Google Chrome\" or find it in your Applications folder.\n3. **Mobile**: Find the Chrome app on your home screen or in your app drawer.\n\nIf you have any issues or need further assistance, feel free to ask. \n\nAlternatively, if you're using a voice assistant or have a specific device in mind, please let me know and I'll provide more tailored guidance.",
       "timestamp": "2026-05-17T20:47:41.646783"
     }
+  ],
+  "TESTSESSION": [
+    {
+      "role": "user",
+      "content": "Hello Malik, are you there?",
+      "timestamp": "2026-05-20T20:22:38.905597",
+      "has_image": false,
+      "intent": "greeting"
+    },
+    {
+      "role": "assistant",
+      "content": "Hello. Yes, I'm here and ready to help. How can I assist you today?",
+      "timestamp": "2026-05-20T20:22:38.918546"
+    }
   ]
 }
