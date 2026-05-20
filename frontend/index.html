@@ -1269,6 +1269,16 @@ function startVoice(){
 
 function stopVoice(){ if(S.recognition) S.recognition.stop(); }
 
+async function fetchWithTimeout(url, options = {}, timeout = 60000){
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+  try{
+    return await fetch(url, {...options, signal: controller.signal});
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
 /* ══════════════════════════════════════════════════════════════
    SEND
 ══════════════════════════════════════════════════════════════ */
@@ -1308,7 +1318,7 @@ async function send(){
     let reply,tags=[],timing;
 
     try{
-      const res=await fetch(`${cfg.backend}/api/chat/message`,{
+      const res=await fetchWithTimeout(`${cfg.backend}/api/chat/message`,{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
@@ -1319,8 +1329,7 @@ async function send(){
           voice_enabled:S.speak,
           history:S.memory?S.history.slice(-12):[],
         }),
-        signal:AbortSignal.timeout(30000),
-      });
+      }, 60000);
       if(!res.ok){
         const errorText = await res.text().catch(()=>res.statusText || 'Unknown error');
         throw new Error(`Backend error ${res.status}: ${errorText}`);
@@ -1330,8 +1339,8 @@ async function send(){
       timing=d.processing_time;
       if(d.multimodal_context?.has_image) tags.push('vision');
       if(d.multimodal_context?.intent)    tags.push(d.multimodal_context.intent);
-    }catch{
-      reply=await callAPI(userText,img);
+    }catch(error){
+      throw error;
     }
 
     removeTyping(tId);
@@ -1362,7 +1371,8 @@ async function send(){
 
   }catch(err){
     removeTyping(tId);
-    addErrorBubble('Connection issue — ensure the backend is running, or the API key is configured.');
+    const msg = err?.message ? `Connection issue — ${err.message}` : 'Connection issue — ensure the backend is running, or the API key is configured.';
+    addErrorBubble(msg);
     console.error(err);
   }finally{
     S.busy=false;
@@ -1399,30 +1409,36 @@ async function callAPI(text,img){
     msgs[msgs.length-1]={role:'user',content};
   }
 
-  const res=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      model:cfg.model,
-      max_tokens:1000,
-      system:`You are Malik, a professional and intelligent AI assistant.
+  try{
+    const res=await fetchWithTimeout('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:cfg.model,
+        max_tokens:1000,
+        system:`You are Malik, a professional and intelligent AI assistant.
 You communicate clearly, directly, and with genuine depth.
 You adapt your tone to context — technical when needed, conversational when appropriate.
 Never use emojis. Be concise but thorough. Provide well-structured, accurate responses.
 If shown an image, describe and analyze it carefully.`,
-      messages:msgs,
-    }),
-    signal:AbortSignal.timeout(30000),
-  });
+        messages:msgs,
+      }),
+    }, 45000);
 
-  if(!res.ok){
-    const err=await res.json().catch(()=>({}));
-    if(err.error?.type==='authentication_error')
-      return 'I am Malik, your AI assistant. To activate full capabilities, please configure your API key or start the backend server.';
-    return 'Request failed ('+res.status+'). Please check your connection and try again.';
+    if(!res.ok){
+      const err=await res.json().catch(()=>({}));
+      if(err.error?.type==='authentication_error'){
+        return 'I am Malik, your AI assistant. To activate full capabilities, please configure your API key or start the backend server.';
+      }
+      return 'Fallback failed ('+res.status+'). Please check your internet connection or API configuration.';
+    }
+
+    const d=await res.json();
+    return d.content?.[0]?.text||'I am ready to help — please try again.';
+  }catch(error){
+    console.error('Fallback API error:', error);
+    return 'Unable to connect to the fallback AI service. Please make sure the backend is running and configured correctly.';
   }
-  const d=await res.json();
-  return d.content?.[0]?.text||'I am ready to help — please try again.';
 }
 
 function useChip(text){ document.getElementById('msg-in').value=text; send(); }

@@ -207,6 +207,18 @@
       "role": "assistant",
       "content": "Hello. Yes, I'm here and ready to help. How can I assist you today?",
       "timestamp": "2026-05-20T20:22:38.918546"
+    },
+    {
+      "role": "user",
+      "content": "Hello Malik, can you respond?",
+      "timestamp": "2026-05-20T20:32:02.802194",
+      "has_image": false,
+      "intent": "greeting"
+    },
+    {
+      "role": "assistant",
+      "content": "Hello again. It's nice to connect with you. Is there something I can help you with or would you like to chat?",
+      "timestamp": "2026-05-20T20:32:02.830287"
     }
   ]
 }

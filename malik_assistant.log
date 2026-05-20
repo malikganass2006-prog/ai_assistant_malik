@@ -132,3 +132,7 @@
 2026-05-21 01:22:37,987 [INFO] malik.chat_router: Multimodal context built: intent=greeting, has_image=False, history_len=0
 2026-05-21 01:22:38,905 [INFO] httpx: HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
 2026-05-21 01:22:38,920 [INFO] malik.chat_router: Request processed in 0.93s
+2026-05-21 01:32:01,765 [INFO] malik.chat_router: Processing message for session TESTSESS... [text=True, speech=False, image=False]
+2026-05-21 01:32:01,781 [INFO] malik.chat_router: Multimodal context built: intent=greeting, has_image=False, history_len=2
+2026-05-21 01:32:02,801 [INFO] httpx: HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-21 01:32:02,836 [INFO] malik.chat_router: Request processed in 1.07s

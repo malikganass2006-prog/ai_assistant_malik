@@ -35,6 +35,7 @@ class ChatRequest(BaseModel):
     session_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     language: str = "en"
     voice_enabled: bool = True
+    history: List[Dict[str, Any]] = Field(default_factory=list)
 
 
 class ChatResponse(BaseModel):
