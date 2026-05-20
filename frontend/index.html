@@ -486,6 +486,10 @@ html,body{height:100%;overflow:hidden;background:var(--void);color:var(--ink1);f
   background:rgba(255,90,90,.1);border-color:rgba(255,90,90,.35);color:var(--red);
   animation:mic-pulse 1s ease-in-out infinite;
 }
+.talk-btn{
+  min-width:56px;padding:0 10px;font-size:12px;letter-spacing:.02em;
+}
+.talk-btn.active{background:rgba(79,143,255,.15);border-color:rgba(79,143,255,.35);color:var(--accent);}
 @keyframes mic-pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,90,90,.3)}50%{box-shadow:0 0 0 7px rgba(255,90,90,0)}}
 
 .send-btn{
@@ -843,6 +847,9 @@ html,body{height:100%;overflow:hidden;background:var(--void);color:var(--ink1);f
               <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
               <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/>
             </svg>
+          </button>
+          <button class="act-btn talk-btn" id="talk-btn" title="Talk to Malik" onclick="toggleTalkMode()">
+            Talk
           </button>
           <button class="send-btn" id="send-btn" onclick="send()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1234,6 +1241,11 @@ function toggleMic(){
   S.recording ? stopVoice() : startVoice();
 }
 
+function toggleTalkMode(){
+  if(!S.voice){ toast('Enable voice mode first'); return; }
+  S.recording ? stopVoice() : startVoice();
+}
+
 function startVoice(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){ toast('Speech recognition not supported','error'); return; }
@@ -1245,6 +1257,7 @@ function startVoice(){
   S.recognition.onstart=()=>{
     S.recording=true;
     document.getElementById('mic-btn').classList.add('recording');
+    document.getElementById('talk-btn')?.classList.add('active');
     document.getElementById('msg-in').placeholder='Listening...';
     setStatus('listening');
   };
@@ -1260,6 +1273,7 @@ function startVoice(){
   S.recognition.onend=()=>{
     S.recording=false;
     document.getElementById('mic-btn').classList.remove('recording');
+    document.getElementById('talk-btn')?.classList.remove('active');
     document.getElementById('msg-in').placeholder='Say "Hey Malik", or type a command';
     setStatus('idle');
     const t=document.getElementById('msg-in').value.trim();
@@ -1268,13 +1282,14 @@ function startVoice(){
   S.recognition.onerror=e=>{
     S.recording=false;
     document.getElementById('mic-btn').classList.remove('recording');
+    document.getElementById('talk-btn')?.classList.remove('active');
     setStatus('idle');
     if(e.error!=='no-speech') toast('Voice error: '+e.error,'error');
   };
   S.recognition.start();
 }
 
-function stopVoice(){ if(S.recognition) S.recognition.stop(); }
+function stopVoice(){ if(S.recognition) S.recognition.stop(); document.getElementById('talk-btn')?.classList.remove('active'); }
 
 async function fetchWithTimeout(url, options = {}, timeout = 60000){
   const controller = new AbortController();
