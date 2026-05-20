@@ -2,6 +2,7 @@
 Chat Router - Main conversation and multimodal fusion endpoint
 """
 
+import asyncio
 import logging
 import time
 from datetime import datetime
@@ -33,26 +34,32 @@ async def process_message(request: ChatRequest):
                    f"[text={bool(request.message)}, speech={bool(request.speech_text)}, "
                    f"image={bool(request.image_base64)}]")
 
-        # Step 1: Process image if provided
-        image_analysis = ""
+        combined_text = request.message or request.speech_text or ""
+
+        # Step 1: Load history, detect intent, and analyze image concurrently when possible.
+        tasks = [
+            memory_service.get_context_window(session_id),
+            llm_service.detect_intent(combined_text),
+        ]
         if request.image_base64:
             logger.info("Analyzing image...")
-            vision_result = await vision_service.analyze_image(
+            tasks.append(vision_service.analyze_image(
                 request.image_base64,
-                query=request.message or request.speech_text or "Describe this image"
-            )
+                query=combined_text or "Describe this image"
+            ))
+
+        results = await asyncio.gather(*tasks)
+        conversation_history = results[0]
+        intent = results[1]
+
+        image_analysis = ""
+        if request.image_base64:
+            vision_result = results[2]
             image_analysis = vision_result.get("description", "")
             if vision_result.get("objects"):
                 image_analysis += f"\n\nDetected objects: {', '.join(vision_result['objects'])}"
             if vision_result.get("text_content"):
                 image_analysis += f"\n\nVisible text: {vision_result['text_content']}"
-
-        # Step 2: Get conversation history
-        conversation_history = await memory_service.get_context_window(session_id)
-
-        # Step 3: Detect intent
-        combined_text = request.message or request.speech_text or ""
-        intent = await llm_service.detect_intent(combined_text)
 
         # Step 4: Build multimodal context object
         context = {
@@ -115,19 +122,33 @@ async def stream_message(request: ChatRequest):
 
     async def generate():
         session_id = request.session_id
+        start_time = time.time()
+        combined_text = request.message or request.speech_text or ""
 
-        # Process image
+        # Process history, intent, and image concurrently
+        tasks = [
+            memory_service.get_context_window(session_id),
+            llm_service.detect_intent(combined_text),
+        ]
+        if request.image_base64:
+            logger.info("Analyzing image for stream...")
+            tasks.append(vision_service.analyze_image(
+                request.image_base64,
+                query=combined_text or "Describe this image"
+            ))
+
+        results = await asyncio.gather(*tasks)
+        conversation_history = results[0]
+        intent = results[1]
+
         image_analysis = ""
         if request.image_base64:
-            vision_result = await vision_service.analyze_image(
-                request.image_base64,
-                query=request.message or "Describe this image"
-            )
+            vision_result = results[2]
             image_analysis = vision_result.get("description", "")
-
-        # Build context
-        conversation_history = await memory_service.get_context_window(session_id)
-        intent = await llm_service.detect_intent(request.message or request.speech_text or "")
+            if vision_result.get("objects"):
+                image_analysis += f"\n\nDetected objects: {', '.join(vision_result['objects'])}"
+            if vision_result.get("text_content"):
+                image_analysis += f"\n\nVisible text: {vision_result['text_content']}"
 
         context = {
             "user_input": request.message,
@@ -137,16 +158,20 @@ async def stream_message(request: ChatRequest):
             "intent": intent,
             "timestamp": datetime.utcnow().isoformat(),
             "session_id": session_id,
+            "language": request.language,
         }
 
-        # Stream response
-        full_response = await llm_service.generate_response(context, stream=True)
-
-        # Save to memory
         user_msg = request.message or request.speech_text or "[input]"
         await memory_service.add_message(session_id, "user", user_msg)
-        await memory_service.add_message(session_id, "assistant", full_response)
 
-        yield f"data: {json.dumps({'text': full_response, 'done': True})}\n\n"
+        assistant_text = ""
+        async for chunk in llm_service.stream_response(context):
+            if chunk.get("text"):
+                assistant_text += chunk["text"]
+            yield f"data: {json.dumps(chunk)}\n\n"
+
+        processing_time = time.time() - start_time
+        await memory_service.add_message(session_id, "assistant", assistant_text)
+        yield f"data: {json.dumps({'done': True, 'processing_time': processing_time, 'intent': intent, 'has_image': bool(image_analysis)})}\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")

@@ -125,6 +125,62 @@ class LLMService:
             logger.error(f"LLM error: {e}")
             return "I'm having trouble processing your request right now. Please try again."
 
+    async def stream_response(self, context: Dict[str, Any]) -> AsyncGenerator[Dict[str, Any], None]:
+        """Stream partial assistant response tokens as they arrive."""
+        endpoint = self.endpoints.get(self.provider)
+        api_key = self.api_keys.get(self.provider)
+
+        if not api_key or self.provider == "offline":
+            if settings.OFFLINE_MODE:
+                text = self._offline_response(context)
+            else:
+                text = self._mock_response(context)
+            yield {"text": text, "done": True}
+            return
+
+        messages = [{"role": "system", "content": settings.SYSTEM_PROMPT}]
+        history = self._format_history(context.get("conversation_history", []))
+        messages.extend(history)
+        user_prompt = self._build_multimodal_prompt(context)
+        messages.append({"role": "user", "content": user_prompt})
+
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "max_tokens": self.max_tokens,
+            "temperature": self.temperature,
+            "stream": True,
+        }
+
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                async with client.stream("POST", endpoint, json=payload, headers=headers) as response:
+                    response.raise_for_status()
+                    async for line in response.aiter_lines():
+                        if not line or not line.startswith("data:"):
+                            continue
+                        data = line[5:].strip()
+                        if data == "[DONE]":
+                            break
+                        try:
+                            chunk = json.loads(data)
+                            delta = chunk["choices"][0].get("delta", {})
+                            if "content" in delta:
+                                yield {"text": delta["content"], "done": False}
+                        except json.JSONDecodeError:
+                            continue
+        except httpx.HTTPStatusError as e:
+            logger.error(f"LLM API error {e.response.status_code}: {e.response.text}")
+            yield {"text": "I encountered an issue connecting to my reasoning engine. Please check your API key and try again.", "done": True}
+        except Exception as e:
+            logger.error(f"LLM streaming error: {e}")
+            yield {"text": "I'm having trouble processing your request right now. Please try again.", "done": True}
+
     def _offline_response(self, context: Dict[str, Any]) -> str:
         """Generate a simple offline assistant answer when no cloud API is available."""
         text = (context.get("user_input") or "").strip()

@@ -1326,8 +1326,14 @@ async function send(){
   S.busy=true; setStatus('thinking');
   document.getElementById('send-btn').disabled=true;
 
+  let reply = '';
+  let tags = [];
+  let timing = 0;
+
+  const streamBubbleId = addStreamingBubble();
+
   try{
-      const res=await fetchWithTimeout(`${cfg.backend}/api/chat/message`,{
+      const res=await fetchWithTimeout(`${cfg.backend}/api/chat/stream`,{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
@@ -1343,30 +1349,53 @@ async function send(){
         const errorText = await res.text().catch(()=>res.statusText || 'Unknown error');
         throw new Error(`Backend error ${res.status}: ${errorText}`);
       }
-      const d=await res.json();
-      reply=d.response || 'I did not receive a response from the assistant.';
-      timing=d.processing_time;
-      if(d.multimodal_context?.has_image) tags.push('vision');
-      if(d.multimodal_context?.intent)    tags.push(d.multimodal_context.intent);
-    }catch(error){
-      throw error;
-    }
 
-    removeTyping(tId);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
 
-    if(S.memory) S.history.push({role:'assistant',content:reply});
-    S.allHistory.push({role:'assistant',content:reply,time:Date.now()});
-    S.msgCount++;
-    document.getElementById('msg-count').textContent=S.msgCount;
+      while(true){
+        const {done, value}=await reader.read();
+        if(done) break;
+        buffer += decoder.decode(value, {stream:true});
+        const parts = buffer.split('\n\n');
+        buffer = parts.pop();
+        for(const part of parts){
+          const line=part.trim();
+          if(!line.startsWith('data:')) continue;
+          const payload=line.slice(5).trim();
+          if(!payload) continue;
+          let frame;
+          try{ frame = JSON.parse(payload); }catch(e){ continue; }
+          if(frame.text){
+            reply += frame.text;
+            appendStreamText(streamBubbleId, frame.text);
+          }
+          if(frame.done){
+            if(typeof frame.processing_time === 'number') timing = frame.processing_time;
+            if(frame.intent) tags.push(frame.intent);
+            if(frame.has_image) tags.push('vision');
+            finalizeStreamBubble(streamBubbleId, tags, timing);
+          }
+        }
+      }
 
-    const detectedMode=detectMode(userText);
-    document.getElementById('mode-tag').textContent=detectedMode;
-    document.getElementById('mode-tag').classList.toggle('active', detectedMode!=='General');
-    tags.unshift(detectedMode.toLowerCase());
+      removeTyping(tId);
 
-    addBubble('ai',reply,null,tags,timing);
+      if(S.memory) S.history.push({role:'assistant',content:reply});
+      S.allHistory.push({role:'assistant',content:reply,time:Date.now()});
+      S.msgCount++;
+      document.getElementById('msg-count').textContent=S.msgCount;
 
-    if(S.speak) speakText(reply);
+      const detectedMode=detectMode(userText);
+      document.getElementById('mode-tag').textContent=detectedMode;
+      document.getElementById('mode-tag').classList.toggle('active', detectedMode!=='General');
+      tags.unshift(detectedMode.toLowerCase());
+
+      if(!reply){ reply='I did not receive a response from the assistant.'; appendStreamText(streamBubbleId, reply); }
+      finalizeStreamBubble(streamBubbleId, tags, timing);
+
+      if(S.speak) speakText(reply);
 
     // Auto-title conversation from first exchange
     if(S.msgCount===1){
@@ -1505,6 +1534,92 @@ If shown an image, describe and analyze it carefully.`,
 
 function useChip(text){ document.getElementById('msg-in').value=text; send(); }
 
+function detectDesktopAutomation(text){
+  const trimmed=text.trim();
+  const lower=trimmed.toLowerCase();
+
+  const urlMatch = trimmed.match(/(https?:\/\/[^\s]+|www\.[^\s]+\.[^\s]+)/i);
+  if(/^(open|visit|go to)\b/.test(lower) && urlMatch){
+    return {action:'open_url', url:urlMatch[0]};
+  }
+
+  if(/^(list|show)\s+(files|directory|folder)\b/.test(lower)){
+    const pathMatch = trimmed.match(/\b(?:in|at|path)\s+(?:"([^"]+)"|'([^']+)'|([^\s]+))/i);
+    const target = pathMatch ? (pathMatch[1]||pathMatch[2]||pathMatch[3]) : '.';
+    return {action:'list_directory', path: target};
+  }
+
+  if(/^(read|open)\s+file\b/.test(lower)){
+    const pathMatch = trimmed.match(/\b(?:file|from|path)\s+(?:"([^"]+)"|'([^']+)'|([^\s]+))/i);
+    const target = pathMatch ? (pathMatch[1]||pathMatch[2]||pathMatch[3]) : '';
+    return {action:'read_file', path: target};
+  }
+
+  if(/^(open|show)\s+(folder|directory|path)\b/.test(lower)){
+    const pathMatch = trimmed.match(/\b(?:folder|directory|path)\s+(?:"([^"]+)"|'([^']+)'|([^\s]+))/i);
+    const target = pathMatch ? (pathMatch[1]||pathMatch[2]||pathMatch[3]) : '.';
+    return {action:'open_path', path: target};
+  }
+
+  if(/^(run|execute)(\s+command)?\b/.test(lower)){
+    const command = trimmed.replace(/^(run|execute)(\s+command)?\s*/i, '');
+    return {action:'run_command', command: command || trimmed};
+  }
+
+  return null;
+}
+
+async function sendDesktopCommand(text, automation, typingId){
+  if(S.busy) return;
+  S.busy=true; setStatus('thinking');
+  document.getElementById('send-btn').disabled=true;
+
+  try{
+    const response = await fetchWithTimeout(`${cfg.backend}/api/automation/desktop`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        action: automation.action,
+        command: automation.command || undefined,
+        path: automation.path || undefined,
+        url: automation.url || undefined,
+      }),
+    }, 60000);
+
+    if(!response.ok){
+      const errorText = await response.text().catch(()=>response.statusText || 'Unknown error');
+      throw new Error(`Automation backend error ${response.status}: ${errorText}`);
+    }
+
+    const data = await response.json();
+    removeTyping(typingId);
+
+    const reply = data.output || 'Desktop automation completed.';
+    const details = data.details ? JSON.stringify(data.details, null, 2) : '';
+    const responseText = details ? `${reply}\n\n${details}` : reply;
+
+    if(S.memory) S.history.push({role:'assistant',content:responseText});
+    S.allHistory.push({role:'assistant',content:responseText,time:Date.now()});
+    S.msgCount++;
+    document.getElementById('msg-count').textContent=S.msgCount;
+
+    addBubble('ai', responseText, null, ['Automation']);
+    speakText(responseText);
+    saveCurrentConv('Desktop automation');
+    saveStorage();
+  }catch(err){
+    removeTyping(typingId);
+    const msg = err?.message ? `Automation failed — ${err.message}` : 'Automation request failed.';
+    addErrorBubble(msg);
+    console.error(err);
+  }finally{
+    S.busy=false;
+    document.getElementById('send-btn').disabled=false;
+    setStatus('idle');
+    document.getElementById('msg-in').focus();
+  }
+}
+
 /* ══════════════════════════════════════════════════════════════
    BUBBLES
 ══════════════════════════════════════════════════════════════ */
@@ -1584,6 +1699,43 @@ function addTyping(){
 }
 
 function removeTyping(id){ document.getElementById(id)?.remove(); }
+
+function addStreamingBubble(){
+  const area=document.getElementById('messages');
+  const id='stream-'+Date.now();
+  const row=document.createElement('div');
+  row.className='msg-row';
+  row.id=id;
+  row.innerHTML=`
+    <div class="avatar ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+    <div class="bubble-wrap">
+      <div class="bubble ai stream"><div class="stream-text"></div><div class="bubble-meta"></div></div>
+    </div>
+  `;
+  area.appendChild(row);
+  area.scrollTop=area.scrollHeight;
+  return id;
+}
+
+function appendStreamText(id, chunk){
+  const row=document.getElementById(id);
+  if(!row) return;
+  const textEl=row.querySelector('.stream-text');
+  if(!textEl) return;
+  textEl.innerHTML += esc(chunk).replace(/\n/g,'<br>');
+  row.scrollIntoView({behavior:'smooth', block:'end'});
+}
+
+function finalizeStreamBubble(id, tags, timing){
+  const row=document.getElementById(id);
+  if(!row) return;
+  const meta=row.querySelector('.bubble-meta');
+  if(!meta) return;
+  const uniqueTags=[...new Set(tags.filter(Boolean))];
+  const tagHTML=uniqueTags.map(t=>`<span class="tag">${esc(t)}</span>`).join('');
+  const timeStr=timing?`<span>${timing.toFixed(2)}s</span>`:'';
+  meta.innerHTML=`${timeStr}${tagHTML}`;
+}
 
 /* ── Copy & Regen ─────────────────────────────────────────── */
 async function copyMsg(btn){
