@@ -1317,14 +1317,16 @@ async function send(){
 
   addBubble('user',userText,img);
   const tId=addTyping();
+  const automation = detectDesktopAutomation(userText);
+  if(automation){
+    await sendDesktopCommand(userText, automation, tId);
+    return;
+  }
 
   S.busy=true; setStatus('thinking');
   document.getElementById('send-btn').disabled=true;
 
   try{
-    let reply,tags=[],timing;
-
-    try{
       const res=await fetchWithTimeout(`${cfg.backend}/api/chat/message`,{
         method:'POST',
         headers:{'Content-Type':'application/json'},
