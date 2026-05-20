@@ -21,7 +21,7 @@ class MultimodalContext(BaseModel):
     user_input: str = ""
     speech_text: str = ""
     image_analysis: str = ""
-    conversation_history: List[Dict[str, str]] = []
+    conversation_history: List[Dict[str, str]] = Field(default_factory=list)
     intent: str = ""
     timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
     session_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -65,7 +65,7 @@ class VisionRequest(BaseModel):
 
 class VisionResponse(BaseModel):
     description: str
-    objects: List[str] = []
+    objects: List[str] = Field(default_factory=list)
     text_content: str = ""
     scene: str = ""
     status: str = "success"
@@ -78,6 +78,6 @@ class MemoryRequest(BaseModel):
 
 class MemoryResponse(BaseModel):
     session_id: str
-    history: List[Dict[str, Any]] = []
+    history: List[Dict[str, Any]] = Field(default_factory=list)
     total_messages: int = 0
     status: str = "success"
