@@ -1,0 +1,160 @@
+{
+  "malik_1sahx2gek": [
+    {
+      "role": "user",
+      "content": "What can you do?",
+      "timestamp": "2026-05-04T18:04:45.015845",
+      "has_image": false,
+      "intent": "question"
+    },
+    {
+      "role": "assistant",
+      "content": "I'm Malik, your intelligent AI assistant. I can understand and respond to voice, images, and text input simultaneously. I'm here to help you with a wide range of tasks and questions.\n\nSome examples of what I can do include:\n\n1. **Answering questions**: I can provide information on various topics, from science and history to entertainment and culture.\n2. **Image analysis**: If you provide an image, I can analyze it and provide information about the objects, scenes, or text within it.\n3. **Language translation**: I can translate text from English to Urdu and vice versa.\n4. **Conversational dialogue**: I can engage in natural-sounding conversations, using context and understanding to respond to your questions and statements.\n5. **Providing definitions**: I can define words and phrases, explaining their meanings and usage.\n6. **Offering suggestions**: I can suggest possible solutions to problems or provide ideas and inspiration for creative projects.\n\nWhat would you like to talk about or ask me? I'm here to help!",
+      "timestamp": "2026-05-04T18:04:45.015845"
+    },
+    {
+      "role": "user",
+      "content": "hi",
+      "timestamp": "2026-05-04T18:05:36.333846",
+      "has_image": false,
+      "intent": "greeting"
+    },
+    {
+      "role": "assistant",
+      "content": "Hello! It's nice to meet you. Is there something I can help you with or would you like to chat?",
+      "timestamp": "2026-05-04T18:05:36.338317"
+    },
+    {
+      "role": "user",
+      "content": "hi",
+      "timestamp": "2026-05-04T18:06:40.663130",
+      "has_image": false,
+      "intent": "greeting"
+    },
+    {
+      "role": "assistant",
+      "content": "Hello! It's nice to meet you. How's your day going so far?",
+      "timestamp": "2026-05-04T18:06:40.663130"
+    },
+    {
+      "role": "user",
+      "content": "hi",
+      "timestamp": "2026-05-04T18:07:05.074324",
+      "has_image": false,
+      "intent": "greeting"
+    },
+    {
+      "role": "assistant",
+      "content": "Hello! It's lovely to greet you back. How can I assist you today?",
+      "timestamp": "2026-05-04T18:07:05.074324"
+    },
+    {
+      "role": "user",
+      "content": "give python code to built chatbot",
+      "timestamp": "2026-05-04T18:07:35.819689",
+      "has_image": false,
+      "intent": "general"
+    },
+    {
+      "role": "assistant",
+      "content": "Here's a simple example of a chatbot built using Python and the NLTK library. This chatbot will respond to basic greetings and have a conversation.\n\n**Prerequisites:**\n\n* Python 3.x installed\n* NLTK library installed (`pip install nltk`)\n* Download the required NLTK data using `nltk.download('punkt')` and `nltk.download('wordnet')`\n\n**Code:**\n```python\nimport nltk\nfrom nltk.stem import WordNetLemmatizer\nlemmatizer = WordNetLemmatizer()\n\nimport json\nimport pickle\nimport numpy as np\n\nfrom keras.models import Sequential\nfrom keras.layers import Dense, Activation, Dropout\nfrom keras.optimizers import SGD\nimport random\n\nwords = []\nclasses = []\ndocuments = []\nignore_words = ['?', '!']\ndata_file = open('intents.json').read()\nintents = json.loads(data_file)\n\nfor intent in intents['intents']:\n    for pattern in intent['patterns']:\n        # tokenize each word in the sentence\n        w = nltk.word_tokenize(pattern)\n        words.extend(w)\n        # add documents in the corpus\n        documents.append((w, intent[\"tag\"]))\n        # add to our classes list\n        if intent[\"tag\"] not in classes:\n            classes.append(intent[\"tag\"])\n\nwords = [lemmatizer.lemmatize(w.lower()) for w in words if w not in ignore_words]\nwords = sorted(list(set(words)))\n\nclasses = sorted(list(set(classes)))\n\npickle.dump(words, open('words.pkl', 'wb'))\npickle.dump(classes, open('classes.pkl', 'wb'))\n\ntraining = []\noutput_empty = [0] * len(classes)\nfor doc in documents:\n    # initialize our bag of words\n    bag = []\n    # list of tokenized words for the pattern\n    word_patterns = doc[0]\n    # lemmatize each word - create base word, in attempt to represent related words\n    word_patterns = [lemmatizer.lemmatize(word.lower()) for word in word_patterns]\n    # create our bag of words array\n    for word in words:\n        bag.append(1) if word in word_patterns else bag.append(0)\n\n    # output is a '0' for each tag and '1' for current tag (for each pattern)\n    output_row = list(output_empty)\n    output_row[classes.index(doc[1])] = 1\n\n    training.append([bag, output_row])\n# shuffle our features and turn into np.array\nrandom.shuffle(training)\ntraining = np.array(training)\n# create train and test lists\ntrain_x = list(training[:,0])\ntrain_y = list(training[:,1])\nprint(\"Training data created\")\n\n# Create model - 3 layers. First layer 128 neurons, second layer 64 neurons and 3rd output layer with number of neurons\n# equal to number of intents to predict output intent with softmax\nmodel = Sequential()\nmodel.add(Dense(128, input_shape=(len(train_x[0]),), activation='relu'))\nmodel.add(Dropout(0.5))\nmodel.add(Dense(64, activation='relu'))\nmodel.add(Dropout(0.5))\nmodel.add(Dense(len(train_y[0]), activation='softmax'))\n# Compile model. Stochastic gradient descent with Nesterov accelerated gradient gives good results for this model\nsgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)\nmodel.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])\n\n#training and saving the model \nhist = model.fit(np.array(train_x), np.array(train_y), epochs=200, batch_size=5, verbose=1)\nmodel.save('chatbot_model.h5', hist)\n\ndef clean_up_sentence(sentence):\n    # tokenize the pattern\n    sentence_words = nltk.word_tokenize(sentence)\n    # stem each word\n    sentence_words = [lemmatizer.lemmatize(word.lower()) for word in sentence_words]\n    return sentence_words\n\n# return bag of words array: 0 or 1 for each word in the bag that exists in the sentence\ndef bow(sentence, words, show_details=False):\n    # tokenize the pattern\n    sentence_words = clean_up_sentence(sentence)\n    # bag of words\n    bag = [0]*len(words)  \n    for s in sentence_words:\n        for i,w in enumerate(words):\n            if w == s: \n                # assign 1 if current word is in the vocabulary position\n                bag[i] = 1\n                if show_details:\n                    print (\"found in bag: %s\" % w)\n    return(np.array(bag))\n\ndef predict_class(sentence, model):\n    # filter out predictions below a threshold\n    p = bow(sentence, words, show_details=False)\n    res = model.predict(np.array([p]))[0]\n    ERROR_THRESHOLD = 0.25\n    results = [[i,r] for i,r in enumerate(res) if r>ERROR_THRESHOLD] \n    # sort by strength of probability\n    results.sort(key=lambda x: x[1], reverse=True) \n    return_list = []\n    for r in results:\n        return_list.append({\"intent\": classes[r[0]], \"probability\": str(r[1])})\n    return return_list\n\ndef getResponse(ints, intents_json):\n    tag = ints[0]['intent']\n    list_of_intents_tag = intents_json['intents']\n    result = None\n    for i in list_of_intents_tag:\n        if(i['tag']== tag):\n            result = random.choice(i['responses'])\n            break\n    return result\n\ndef chatbot_response(msg):\n    ints = predict_class(msg, model)\n    res = getResponse(ints, intents)\n    return res\n\n# Create a simple chat interface\nwhile True:\n    message = input(\"You: \")\n    response = chatbot_response(message)\n    print(\"Bot: \", response)\n```\nThis code uses the NLTK library for natural language processing and the Keras library for building the neural network model.\n\n**Note:** This is a basic example and you may need to modify it to fit your specific use case. You'll also need to create an `intents.json` file that defines the intents and responses for your chatbot.\n\n**Example use case:**\n\n* Run the code and type a message to the chatbot.\n* The chatbot will respond based on the intent it detects in the message.\n\nI hope this helps! Let me know if you have any questions or need further assistance.",
+      "timestamp": "2026-05-04T18:07:35.835319"
+    }
+  ],
+  "malik_e64mbcmgg": [
+    {
+      "role": "user",
+      "content": "hi",
+      "timestamp": "2026-05-05T19:04:34.320954",
+      "has_image": false,
+      "intent": "greeting"
+    },
+    {
+      "role": "assistant",
+      "content": "Hello. It's nice to meet you. Is there something I can help you with or would you like to chat?",
+      "timestamp": "2026-05-05T19:04:34.320954"
+    },
+    {
+      "role": "user",
+      "content": "what you do",
+      "timestamp": "2026-05-05T19:05:04.031336",
+      "has_image": false,
+      "intent": "question"
+    },
+    {
+      "role": "assistant",
+      "content": "I'm an intelligent multimodal AI assistant, which means I can understand and respond to voice, images, and text input simultaneously. I can help with a wide range of tasks, such as answering questions, providing information, translating text, and even having conversations. I'm here to assist and provide helpful information, so feel free to ask me anything! \n\nSome examples of what I can do include:\n- Answering questions on various topics\n- Providing definitions and explanations\n- Translating text from English to Urdu and vice versa\n- Offering suggestions and ideas\n- Chatting and having conversations\n\nWhat specifically would you like to know or discuss?",
+      "timestamp": "2026-05-05T19:05:04.031336"
+    }
+  ],
+  "malik_hh6v6sh1w": [
+    {
+      "role": "user",
+      "content": "hi",
+      "timestamp": "2026-05-05T19:47:34.118540",
+      "has_image": false,
+      "intent": "greeting"
+    },
+    {
+      "role": "assistant",
+      "content": "Hello. It's nice to meet you. Is there something I can help you with or would you like to chat?",
+      "timestamp": "2026-05-05T19:47:34.118540"
+    }
+  ],
+  "malik_gfmq7q07d": [
+    {
+      "role": "user",
+      "content": "Explain multimodal AI",
+      "timestamp": "2026-05-05T19:52:59.417515",
+      "has_image": false,
+      "intent": "question"
+    },
+    {
+      "role": "assistant",
+      "content": "Multimodal AI refers to artificial intelligence systems that can process and understand multiple forms of data or input, such as text, images, voice, and even gestures. These systems are designed to mimic human-like interaction, where we naturally use multiple senses to perceive and understand the world around us.\n\nIn the context of our conversation, I can understand and respond to voice, images, and text input simultaneously. This allows me to have more nuanced and informed discussions, as I can consider multiple sources of information and provide more accurate and relevant responses.\n\nFor example, if you were to send me an image of a product, I could analyze the image and provide information about the product, such as its features, price, and availability. At the same time, if you were to ask me a question about the product via text or voice, I could respond based on the image analysis and our conversation history.\n\nThe benefits of multimodal AI include:\n\n1. **Improved user experience**: By allowing users to interact with AI systems in multiple ways, multimodal AI can make interactions more natural and intuitive.\n2. **Increased accuracy**: By considering multiple sources of information, multimodal AI can provide more accurate and comprehensive responses.\n3. **Enhanced accessibility**: Multimodal AI can help users with disabilities, such as visual or hearing impairments, by providing alternative modes of interaction.\n\nHowever, multimodal AI also presents some challenges, such as:\n\n1. **Data integration**: Combining data from multiple sources can be complex and requires sophisticated algorithms.\n2. **Contextual understanding**: Multimodal AI systems need to understand the context of the input data and how it relates to the user's intent.\n3. **Scalability**: Multimodal AI systems can require significant computational resources and infrastructure to process and analyze large amounts of data.\n\nOverall, multimodal AI has the potential to revolutionize the way we interact with technology and each other, and I'm excited to be a part of this journey!",
+      "timestamp": "2026-05-05T19:52:59.417515"
+    }
+  ],
+  "malik_wq8hf6ixe": [
+    {
+      "role": "user",
+      "content": "hi",
+      "timestamp": "2026-05-19T20:34:13.359867",
+      "has_image": false,
+      "intent": "greeting"
+    },
+    {
+      "role": "assistant",
+      "content": "Hello. It's nice to meet you. Is there something I can help you with or would you like to chat?",
+      "timestamp": "2026-05-19T20:34:13.359867"
+    }
+  ],
+  "TWEMRS": [
+    {
+      "role": "user",
+      "content": "Talk with me using voice",
+      "timestamp": "2026-05-19T20:38:13.400055",
+      "has_image": false,
+      "intent": "general"
+    },
+    {
+      "role": "assistant",
+      "content": "Hello. I'd be happy to chat with you. Since we are communicating through text, I'll respond in a way that simulates a voice conversation. How's your day going so far? Is there something on your mind that you'd like to talk about, or would you like me to suggest some topics?",
+      "timestamp": "2026-05-19T20:38:13.401051"
+    }
+  ],
+  "PQBJ16": [
+    {
+      "role": "user",
+      "content": "Talk with me using voice",
+      "timestamp": "2026-05-19T20:41:49.046485",
+      "has_image": false,
+      "intent": "general"
+    },
+    {
+      "role": "assistant",
+      "content": "Hello. I'd be happy to chat with you. Since we are communicating through text, I'll do my best to simulate a voice conversation. How's your day going so far? Is there something on your mind that you'd like to talk about, or would you like me to suggest some topics?",
+      "timestamp": "2026-05-19T20:41:49.046485"
+    }
+  ]
+}

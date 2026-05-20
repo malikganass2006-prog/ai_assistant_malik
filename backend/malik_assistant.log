@@ -1,0 +1,92 @@
+2026-05-04 23:04:10,321 [INFO] malik.main: Environment: production
+2026-05-04 23:04:43,096 [INFO] malik.chat_router: Processing message for session malik_1s... [text=True, speech=False, image=False]
+2026-05-04 23:04:43,096 [INFO] malik.chat_router: Multimodal context built: intent=question, has_image=False, history_len=0
+2026-05-04 23:04:45,015 [INFO] httpx: HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-04 23:04:45,015 [INFO] malik.chat_router: Generating TTS audio...
+2026-05-04 23:05:10,315 [INFO] malik.tts_service: Generated gTTS audio: 666624 bytes
+2026-05-04 23:05:10,317 [INFO] malik.chat_router: Request processed in 27.22s
+2026-05-04 23:05:35,054 [INFO] malik.chat_router: Processing message for session malik_1s... [text=True, speech=False, image=False]
+2026-05-04 23:05:35,077 [INFO] malik.chat_router: Multimodal context built: intent=greeting, has_image=False, history_len=2
+2026-05-04 23:05:36,333 [INFO] httpx: HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-04 23:05:36,338 [INFO] malik.chat_router: Generating TTS audio...
+2026-05-04 23:05:37,310 [INFO] malik.tts_service: Generated gTTS audio: 63936 bytes
+2026-05-04 23:05:37,310 [INFO] malik.chat_router: Request processed in 2.26s
+2026-05-04 23:06:39,584 [INFO] malik.chat_router: Processing message for session malik_1s... [text=True, speech=False, image=False]
+2026-05-04 23:06:39,584 [INFO] malik.chat_router: Multimodal context built: intent=greeting, has_image=False, history_len=4
+2026-05-04 23:06:40,663 [INFO] httpx: HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-04 23:06:40,678 [INFO] malik.chat_router: Generating TTS audio...
+2026-05-04 23:06:41,487 [INFO] malik.tts_service: Generated gTTS audio: 46848 bytes
+2026-05-04 23:06:41,487 [INFO] malik.chat_router: Request processed in 1.90s
+2026-05-04 23:07:04,193 [INFO] malik.chat_router: Processing message for session malik_1s... [text=True, speech=False, image=False]
+2026-05-04 23:07:04,193 [INFO] malik.chat_router: Multimodal context built: intent=greeting, has_image=False, history_len=6
+2026-05-04 23:07:05,064 [INFO] httpx: HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-04 23:07:05,074 [INFO] malik.chat_router: Generating TTS audio...
+2026-05-04 23:07:06,112 [INFO] malik.tts_service: Generated gTTS audio: 41664 bytes
+2026-05-04 23:07:06,112 [INFO] malik.chat_router: Request processed in 1.92s
+2026-05-04 23:07:30,362 [INFO] malik.chat_router: Processing message for session malik_1s... [text=True, speech=False, image=False]
+2026-05-04 23:07:30,362 [INFO] malik.chat_router: Multimodal context built: intent=general, has_image=False, history_len=8
+2026-05-04 23:07:35,819 [INFO] httpx: HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-04 23:07:35,835 [INFO] malik.chat_router: Generating TTS audio...
+2026-05-04 23:08:14,352 [INFO] malik.tts_service: Generated gTTS audio: 1016640 bytes
+2026-05-04 23:08:14,352 [INFO] malik.chat_router: Request processed in 43.99s
+2026-05-06 00:01:57,654 [INFO] malik.main: Environment: production
+2026-05-06 00:04:33,434 [INFO] malik.chat_router: Processing message for session malik_e6... [text=True, speech=False, image=False]
+2026-05-06 00:04:33,434 [INFO] malik.chat_router: Multimodal context built: intent=greeting, has_image=False, history_len=0
+2026-05-06 00:04:34,312 [INFO] httpx: HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-06 00:04:34,324 [INFO] malik.chat_router: Generating TTS audio...
+2026-05-06 00:04:35,609 [INFO] malik.tts_service: Generated gTTS audio: 50304 bytes
+2026-05-06 00:04:35,609 [INFO] malik.chat_router: Request processed in 2.17s
+2026-05-06 00:05:02,878 [INFO] malik.chat_router: Processing message for session malik_e6... [text=True, speech=False, image=False]
+2026-05-06 00:05:02,878 [INFO] malik.chat_router: Multimodal context built: intent=question, has_image=False, history_len=2
+2026-05-06 00:05:04,031 [INFO] httpx: HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-06 00:05:04,031 [INFO] malik.chat_router: Generating TTS audio...
+2026-05-06 00:05:19,186 [INFO] malik.tts_service: Generated gTTS audio: 428352 bytes
+2026-05-06 00:05:19,187 [INFO] malik.chat_router: Request processed in 16.31s
+2026-05-06 00:44:37,206 [INFO] malik.main: Environment: production
+2026-05-06 00:45:19,479 [INFO] malik.main: Environment: production
+2026-05-06 00:47:06,221 [INFO] malik.main: Environment: production
+2026-05-06 00:47:33,044 [INFO] malik.chat_router: Processing message for session malik_hh... [text=True, speech=False, image=False]
+2026-05-06 00:47:33,044 [INFO] malik.chat_router: Multimodal context built: intent=greeting, has_image=False, history_len=0
+2026-05-06 00:47:33,857 [INFO] httpx: HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-06 00:47:34,118 [INFO] malik.chat_router: Generating TTS audio...
+2026-05-06 00:47:36,231 [INFO] malik.tts_service: Generated gTTS audio: 50304 bytes
+2026-05-06 00:47:36,231 [INFO] malik.chat_router: Request processed in 3.19s
+2026-05-06 00:52:27,910 [INFO] malik.main: Malik AI Assistant starting up...
+2026-05-06 00:52:27,910 [INFO] malik.main: Environment: production
+2026-05-06 00:52:38,502 [INFO] malik.main: Malik AI Assistant shutting down...
+2026-05-06 00:52:41,582 [INFO] malik.main: Malik AI Assistant starting up...
+2026-05-06 00:52:41,582 [INFO] malik.main: Environment: production
+2026-05-06 00:52:56,667 [INFO] malik.chat_router: Processing message for session malik_gf... [text=True, speech=False, image=False]
+2026-05-06 00:52:56,667 [INFO] malik.chat_router: Multimodal context built: intent=question, has_image=False, history_len=0
+2026-05-06 00:52:59,417 [INFO] httpx: HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-06 00:52:59,417 [INFO] malik.chat_router: Generating TTS audio...
+2026-05-06 00:53:22,569 [INFO] malik.tts_service: Generated gTTS audio: 637632 bytes
+2026-05-06 00:53:22,570 [INFO] malik.chat_router: Request processed in 25.90s
+2026-05-06 00:53:45,932 [INFO] malik.main: Malik AI Assistant shutting down...
+2026-05-11 00:45:21,433 [INFO] malik.main: Malik AI Assistant starting up...
+2026-05-11 00:45:21,433 [INFO] malik.main: Environment: production
+2026-05-11 00:45:33,359 [INFO] malik.main: Malik AI Assistant shutting down...
+2026-05-11 00:45:53,718 [INFO] malik.main: Malik AI Assistant starting up...
+2026-05-11 00:45:53,733 [INFO] malik.main: Environment: production
+2026-05-11 00:45:57,370 [INFO] malik.main: Malik AI Assistant shutting down...
+2026-05-20 01:33:55,626 [INFO] malik.main: Malik AI Assistant starting up...
+2026-05-20 01:33:55,626 [INFO] malik.main: Environment: production
+2026-05-20 01:34:12,376 [INFO] malik.chat_router: Processing message for session malik_wq... [text=True, speech=False, image=False]
+2026-05-20 01:34:12,376 [INFO] malik.chat_router: Multimodal context built: intent=greeting, has_image=False, history_len=0
+2026-05-20 01:34:13,359 [INFO] httpx: HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-20 01:34:13,359 [INFO] malik.chat_router: Generating TTS audio...
+2026-05-20 01:34:14,552 [INFO] malik.tts_service: Generated gTTS audio: 50304 bytes
+2026-05-20 01:34:14,552 [INFO] malik.chat_router: Request processed in 2.18s
+2026-05-20 01:38:12,077 [INFO] malik.chat_router: Processing message for session TWEMRS... [text=True, speech=False, image=False]
+2026-05-20 01:38:12,080 [INFO] malik.chat_router: Multimodal context built: intent=general, has_image=False, history_len=0
+2026-05-20 01:38:13,399 [INFO] httpx: HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-20 01:38:13,402 [INFO] malik.chat_router: Generating TTS audio...
+2026-05-20 01:38:18,892 [INFO] malik.tts_service: Generated gTTS audio: 152256 bytes
+2026-05-20 01:38:18,892 [INFO] malik.chat_router: Request processed in 6.81s
+2026-05-20 01:41:47,770 [INFO] malik.chat_router: Processing message for session PQBJ16... [text=True, speech=False, image=False]
+2026-05-20 01:41:47,770 [INFO] malik.chat_router: Multimodal context built: intent=general, has_image=False, history_len=0
+2026-05-20 01:41:49,046 [INFO] httpx: HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-20 01:41:49,046 [INFO] malik.chat_router: Generating TTS audio...
+2026-05-20 01:41:54,272 [INFO] malik.tts_service: Generated gTTS audio: 148416 bytes
+2026-05-20 01:41:54,273 [INFO] malik.chat_router: Request processed in 6.50s
+2026-05-20 01:43:21,304 [INFO] malik.main: Malik AI Assistant shutting down...
