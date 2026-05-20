@@ -82,3 +82,28 @@ class MemoryResponse(BaseModel):
     history: List[Dict[str, Any]] = Field(default_factory=list)
     total_messages: int = 0
     status: str = "success"
+
+
+class DesktopRequest(BaseModel):
+    action: str
+    command: Optional[str] = None
+    path: Optional[str] = None
+    url: Optional[str] = None
+
+
+class DesktopResponse(BaseModel):
+    status: str
+    output: str = ""
+    details: Optional[Dict[str, Any]] = None
+
+
+class AgentRequest(BaseModel):
+    instruction: str
+    session_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+
+
+class AgentResponse(BaseModel):
+    status: str
+    plan: List[Dict[str, Any]] = Field(default_factory=list)
+    results: List[Dict[str, Any]] = Field(default_factory=list)
+    summary: str = ""

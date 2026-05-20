@@ -72,7 +72,10 @@ class LLMService:
         endpoint = self.endpoints.get(self.provider)
         api_key = self.api_keys.get(self.provider)
 
-        if not api_key:
+        if not api_key or self.provider == "offline":
+            if settings.OFFLINE_MODE:
+                logger.info("Using offline response engine")
+                return self._offline_response(context)
             logger.warning(f"No API key for {self.provider}, using mock response")
             return self._mock_response(context)
 
@@ -121,6 +124,33 @@ class LLMService:
         except Exception as e:
             logger.error(f"LLM error: {e}")
             return "I'm having trouble processing your request right now. Please try again."
+
+    def _offline_response(self, context: Dict[str, Any]) -> str:
+        """Generate a simple offline assistant answer when no cloud API is available."""
+        text = (context.get("user_input") or "").strip()
+        if not text:
+            return "Hello! I'm Malik in offline mode. Ask me anything or describe a desktop automation task."
+
+        lower = text.lower()
+        if any(kw in lower for kw in ["hello", "hi", "salam", "hey"]):
+            return "Hi there! I'm Malik in offline mode. I can help with local desktop automation tasks and simple guidance."
+        if any(kw in lower for kw in ["thanks", "thank you"]):
+            return "You're welcome! Let me know if you need anything else."
+        if any(kw in lower for kw in ["how are you", "what's up", "how is it going"]):
+            return "I'm ready to help in offline mode. Tell me what you want to do on your computer."
+        if any(kw in lower for kw in ["list files", "list directory", "show files", "open folder", "read file", "run command", "open url"]):
+            return (
+                "I can help with desktop automation. Use the dedicated automation endpoint at `/api/automation` or the agent endpoint `/api/agent/execute` "
+                "to run commands, list directories, read files, open URLs, or open local paths."
+            )
+        if any(kw in lower for kw in ["bye", "goodbye", "see you"]):
+            return "Goodbye! Feel free to return whenever you need help with local automation or offline assistance."
+
+        return (
+            "I'm operating in offline mode, so my ability to generate complex responses is limited. "
+            "I can still provide simple guidance and help you trigger local tasks. "
+            "Please try asking for a local desktop action, or configure a cloud API key for full AI capability."
+        )
 
     async def _stream_response(self, client, endpoint, headers, payload) -> str:
         """Handle streaming response and collect full text"""

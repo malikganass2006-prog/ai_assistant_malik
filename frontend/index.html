@@ -767,6 +767,13 @@ html,body{height:100%;overflow:hidden;background:var(--void);color:var(--ink1);f
           <line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
       </button>
+      <button class="icon-btn" onclick="runAgentTask()" title="Run automation task">
+        <div class="shortcut-hint">Automate</div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M5 20h14M5 4h14M9 4v16M15 4v16"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      </button>
       <button class="icon-btn" onclick="confirmClear()" title="Clear chat">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
           <polyline points="3 6 5 6 21 6"/>
@@ -1372,6 +1379,59 @@ async function send(){
   }catch(err){
     removeTyping(tId);
     const msg = err?.message ? `Connection issue — ${err.message}` : 'Connection issue — ensure the backend is running, or the API key is configured.';
+    addErrorBubble(msg);
+    console.error(err);
+  }finally{
+    S.busy=false;
+    document.getElementById('send-btn').disabled=false;
+    setStatus('idle');
+    document.getElementById('msg-in').focus();
+  }
+}
+
+async function runAgentTask(){
+  const task = prompt('Describe the desktop task you want Malik to perform locally.');
+  if(!task || !task.trim()) return;
+  if(S.busy) return;
+
+  // Display the user intent and route to the agent endpoint
+  const instruction = task.trim();
+  if(S.memory) S.history.push({role:'user',content:instruction});
+  S.allHistory.push({role:'user',content:instruction,time:Date.now()});
+  addBubble('user', instruction, null);
+  const tId = addTyping();
+  S.busy = true; setStatus('thinking');
+  document.getElementById('send-btn').disabled = true;
+
+  try{
+    const res = await fetchWithTimeout(`${cfg.backend}/api/agent/execute`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({instruction, session_id: S.sessionId}),
+    }, 60000);
+    if(!res.ok){
+      const errorText = await res.text().catch(()=>res.statusText || 'Unknown error');
+      throw new Error(`Backend error ${res.status}: ${errorText}`);
+    }
+    const data = await res.json();
+    removeTyping(tId);
+
+    const summary = data.summary || 'Task completed.';
+    const details = data.results && data.results.length ? data.results.map(r => `${r.type || r.action || r.command || 'task'}: ${r.message || r.stdout || r.content || JSON.stringify(r)}`).join('\n') : '';
+    const responseText = `${summary}${details ? '\n\nDetails:\n' + details : ''}`;
+
+    if(S.memory) S.history.push({role:'assistant',content:responseText});
+    S.allHistory.push({role:'assistant',content:responseText,time:Date.now()});
+    S.msgCount++;
+    document.getElementById('msg-count').textContent=S.msgCount;
+
+    addBubble('ai', responseText, null, ['Agent','Automation']);
+    speakText(responseText);
+    saveCurrentConv('Automation task');
+    saveStorage();
+  }catch(err){
+    removeTyping(tId);
+    const msg = err?.message ? `Automation failed — ${err.message}` : 'Automation request failed.';
     addErrorBubble(msg);
     console.error(err);
   }finally{

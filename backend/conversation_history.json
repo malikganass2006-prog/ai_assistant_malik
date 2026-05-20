@@ -236,5 +236,19 @@
       "content": "**Parsing JSON Files in Python**\n=====================================\n\nHere's a simple Python function to parse JSON files using the built-in `json` module:\n\n```python\nimport json\n\ndef parse_json_file(file_path):\n    \"\"\"\n    Parse a JSON file and return the data as a Python dictionary.\n\n    Args:\n        file_path (str): The path to the JSON file.\n\n    Returns:\n        dict: The parsed JSON data.\n    \"\"\"\n    try:\n        with open(file_path, 'r') as file:\n            data = json.load(file)\n            return data\n    except FileNotFoundError:\n        print(f\"File not found: {file_path}\")\n        return None\n    except json.JSONDecodeError as e:\n        print(f\"Error parsing JSON: {e}\")\n        return None\n\n# Example usage:\nfile_path = 'example.json'\ndata = parse_json_file(file_path)\nprint(data)\n```\n\n**Explanation:**\n\n1. The function `parse_json_file` takes a `file_path` parameter, which is the path to the JSON file you want to parse.\n2. We use a `try`-`except` block to handle potential errors, such as file not found or JSON decoding errors.\n3. We open the file in read mode (`'r'`) and use the `json.load()` function to parse the JSON data.\n4. If the parsing is successful, we return the parsed data as a Python dictionary.\n5. If an error occurs, we print an error message and return `None`.\n\n**Example Use Case:**\n\nSuppose you have a JSON file named `example.json` with the following content:\n```json\n{\n    \"name\": \"John Doe\",\n    \"age\": 30,\n    \"city\": \"New York\"\n}\n```\nYou can call the `parse_json_file` function with the file path as an argument, like this:\n```python\ndata = parse_json_file('example.json')\nprint(data)  # Output: {'name': 'John Doe', 'age': 30, 'city': 'New York'}\n```",
       "timestamp": "2026-05-20T20:33:12.118115"
     }
+  ],
+  "2PTSQO": [
+    {
+      "role": "user",
+      "content": "open control panel",
+      "timestamp": "2026-05-20T20:45:20.752230",
+      "has_image": false,
+      "intent": "general"
+    },
+    {
+      "role": "assistant",
+      "content": "The Control Panel is a crucial part of the Windows operating system. To open the Control Panel, you can follow these steps:\n\n1. **Method 1: Using the Start Menu**\n   - Click on the Start button (usually located at the bottom left corner of your screen).\n   - Type \"Control Panel\" in the search bar.\n   - Click on the \"Control Panel\" result to open it.\n\n2. **Method 2: Using the Run Dialog Box**\n   - Press the Windows key + R to open the Run dialog box.\n   - Type \"control\" and press Enter.\n\n3. **Method 3: Using the File Explorer**\n   - Open File Explorer.\n   - In the address bar, type \"Control Panel\" and press Enter.\n\nOnce you've opened the Control Panel, you can access various settings and options to manage your computer, including system settings, network settings, user accounts, and more.\n\nIf you have any specific tasks in mind that you'd like to accomplish through the Control Panel, feel free to let me know, and I'll be happy to guide you through the process!",
+      "timestamp": "2026-05-20T20:45:20.752230"
+    }
   ]
 }

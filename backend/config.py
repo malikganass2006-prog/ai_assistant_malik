@@ -27,6 +27,8 @@ class Settings:
     LLM_MODEL: str = os.getenv("LLM_MODEL", "llama-3.3-70b-versatile")
     LLM_MAX_TOKENS: int = int(os.getenv("LLM_MAX_TOKENS", "2048"))
     LLM_TEMPERATURE: float = float(os.getenv("LLM_TEMPERATURE", "0.7"))
+    OFFLINE_MODE: bool = os.getenv("OFFLINE_MODE", "true").lower() == "true"
+    OFFLINE_MODEL_PATH: str = os.getenv("OFFLINE_MODEL_PATH", "")
 
     # TTS Configuration
     TTS_PROVIDER: str = os.getenv("TTS_PROVIDER", "gtts")  # gtts or elevenlabs

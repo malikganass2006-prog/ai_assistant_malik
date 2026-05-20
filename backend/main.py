@@ -17,6 +17,8 @@ from routes.chat import router as chat_router
 from routes.voice import router as voice_router
 from routes.vision import router as vision_router
 from routes.memory import router as memory_router
+from routes.automation import router as automation_router
+from routes.agent import router as agent_router
 from config import settings
 
 # Configure logging
@@ -61,6 +63,8 @@ app.include_router(chat_router, prefix="/api/chat", tags=["Chat"])
 app.include_router(voice_router, prefix="/api/voice", tags=["Voice"])
 app.include_router(vision_router, prefix="/api/vision", tags=["Vision"])
 app.include_router(memory_router, prefix="/api/memory", tags=["Memory"])
+app.include_router(automation_router, prefix="/api/automation", tags=["Desktop Automation"])
+app.include_router(agent_router, prefix="/api/agent", tags=["Agent"])
 
 # Serve frontend static files
 frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
