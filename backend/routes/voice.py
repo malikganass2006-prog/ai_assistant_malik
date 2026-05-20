@@ -1,7 +1,7 @@
 """Voice route"""
 from fastapi import APIRouter
-from models.schemas import VoiceRequest, VoiceResponse
-from services.tts_service import tts_service
+from backend.models.schemas import VoiceRequest, VoiceResponse
+from backend.services.tts_service import tts_service
 
 router = APIRouter()
 
