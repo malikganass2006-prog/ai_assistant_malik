@@ -796,7 +796,7 @@ html,body{height:100%;overflow:hidden;background:var(--void);color:var(--ink1);f
           </svg>
         </div>
         <h2>Hello, I'm <em>Malik</em></h2>
-        <p>Your professional AI assistant. Talk with voice, share images, write code, analyze data — all in one place.</p>
+        <p>Your personal voice assistant. Talk like Siri, share images, run desktop tasks, or ask questions with voice and text.</p>
         <div class="chips">
           <div class="chip" onclick="useChip('Explain how neural networks learn')">Explain neural networks</div>
           <div class="chip" onclick="useChip('Write a Python function to parse JSON files')">Write Python code</div>
@@ -827,7 +827,7 @@ html,body{height:100%;overflow:hidden;background:var(--void);color:var(--ink1);f
       </div>
 
       <div class="input-row">
-        <textarea id="msg-in" placeholder="Ask Malik anything — or press the mic" rows="1"
+        <textarea id="msg-in" placeholder="Say \"Hey Malik\" or press the mic" rows="1"
           onkeydown="onKey(event)" oninput="onInput(this)"></textarea>
         <div class="input-btns">
           <input type="file" id="file-in" accept="image/*" onchange="onFile(event)"/>
@@ -1001,12 +1001,12 @@ function saveStorage(){
    STATUS
 ══════════════════════════════════════════════════════════════ */
 const STATES = {
-  idle:       { text:'Idle — Ready',    cls:''          },
-  listening:  { text:'Listening...',    cls:'listening' },
-  thinking:   { text:'Thinking...',     cls:'thinking'  },
-  speaking:   { text:'Speaking...',     cls:'speaking'  },
-  processing: { text:'Processing...',   cls:'thinking'  },
-  error:      { text:'Error',           cls:'error'     },
+  idle:       { text:'Ready — Malik is listening',    cls:''          },
+  listening:  { text:'Listening...',                 cls:'listening' },
+  thinking:   { text:'Thinking...',                  cls:'thinking'  },
+  speaking:   { text:'Speaking...',                  cls:'speaking'  },
+  processing: { text:'Processing...',                cls:'thinking'  },
+  error:      { text:'Error',                        cls:'error'     },
 };
 
 function setStatus(k){
@@ -1260,7 +1260,7 @@ function startVoice(){
   S.recognition.onend=()=>{
     S.recording=false;
     document.getElementById('mic-btn').classList.remove('recording');
-    document.getElementById('msg-in').placeholder='Ask Malik anything — or press the mic';
+    document.getElementById('msg-in').placeholder='Say "Hey Malik", or type a command';
     setStatus('idle');
     const t=document.getElementById('msg-in').value.trim();
     if(t) setTimeout(send,280);
@@ -1300,7 +1300,7 @@ async function send(){
   // Stop speaking
   if(S.utterance){ window.speechSynthesis?.cancel(); S.speaking=false; document.getElementById('voice-wave').classList.remove('show'); }
 
-  const userText=text; inp.value=''; inp.style.height='auto';
+  const userText=normalizeAssistantCommand(text); inp.value=''; inp.style.height='auto';
   document.getElementById('char-counter').textContent='0 / '+MAX;
   document.getElementById('char-counter').className='char-counter';
   removeImg();
@@ -1567,6 +1567,20 @@ function detectDesktopAutomation(text){
   }
 
   return null;
+}
+
+function normalizeAssistantCommand(text){
+  const wakeWords=[
+    /^hey malik[, ]+/i,
+    /^ok malik[, ]+/i,
+    /^okay malik[, ]+/i,
+    /^hi malik[, ]+/i,
+    /^hello malik[, ]+/i,
+    /^malik[, ]+/i,
+    /^hey siri[, ]+/i,
+    /^ok siri[, ]+/i,
+  ];
+  return wakeWords.reduce((t,regex)=>t.replace(regex,''), text).trim();
 }
 
 async function sendDesktopCommand(text, automation, typingId){
