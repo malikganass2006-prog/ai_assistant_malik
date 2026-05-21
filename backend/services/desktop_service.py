@@ -47,7 +47,7 @@ class DesktopService:
             "notepad", "notepad.exe", "calc", "calc.exe", "calculator", "mspaint", "mspaint.exe",
             "explorer", "explorer.exe", "code", "code.exe", "vscode", "visual studio code",
             "chrome", "chrome.exe", "firefox", "firefox.exe", "python", "python.exe",
-            "browser", "cmd", "powershell", "terminal",
+            "browser", "cmd", "powershell", "terminal", "spotify", "spotify.exe",
         }
         self.app_aliases = {
             "calculator": "calc",
@@ -55,6 +55,8 @@ class DesktopService:
             "vscode": "code",
             "visual studio code": "code",
             "terminal": "cmd",
+            "music": "spotify",
+            "spotify": "spotify",
         }
 
     def _normalize_path(self, path: str) -> str:
@@ -214,6 +216,71 @@ class DesktopService:
                 return {"status": "error", "message": str(e), "app_name": app_name}
 
         return {"status": "error", "message": "No application name or path provided."}
+
+    async def open_application_and_type(self, app_name: str, keys: str = "") -> Dict[str, Any]:
+        """Open an application and optionally type keys into it (requires pyautogui)."""
+        result = await self.open_application(app_name=app_name)
+        if result.get("status") != "ok":
+            return result
+        # If keys provided and pyautogui is available, give the OS a moment then type
+        if keys and PYAUTOGUI_AVAILABLE:
+            try:
+                import time
+                time.sleep(0.6)
+                await self.keyboard_control("type", keys)
+                return {"status": "ok", "action": "open_and_type", "app_name": app_name, "keys": keys}
+            except Exception as e:
+                logger.error(f"Open-and-type failed: {e}")
+                return {"status": "error", "message": str(e)}
+        return result
+
+    async def system_power(self, action: str) -> Dict[str, Any]:
+        """Perform system power actions: shutdown, restart, lock, sleep. Requires confirmation on frontend."""
+        action = (action or "").strip().lower()
+        try:
+            if self.platform.startswith("win"):
+                if action == "shutdown":
+                    subprocess.Popen(["shutdown", "/s", "/t", "0"])  # immediate
+                elif action == "restart":
+                    subprocess.Popen(["shutdown", "/r", "/t", "0"])  # immediate
+                elif action == "sleep":
+                    subprocess.Popen(["rundll32.exe", "powrprof.dll,SetSuspendState", "0", "1", "0"])
+                elif action == "lock":
+                    subprocess.Popen(["rundll32.exe", "user32.dll,LockWorkStation"])
+                else:
+                    return {"status": "error", "message": "Unknown power action."}
+            else:
+                # macOS / Linux fallbacks
+                if action == "shutdown":
+                    subprocess.Popen(["shutdown", "-h", "now"])  # may require sudo
+                elif action == "restart":
+                    subprocess.Popen(["shutdown", "-r", "now"])
+                elif action == "sleep":
+                    subprocess.Popen(["pmset", "sleepnow"])
+                elif action == "lock":
+                    subprocess.Popen(["loginctl", "lock-session"])  # linux generic
+                else:
+                    return {"status": "error", "message": "Unknown power action."}
+            return {"status": "ok", "action": "system_power", "power_action": action}
+        except Exception as e:
+            logger.error(f"System power error: {e}")
+            return {"status": "error", "message": str(e)}
+
+    async def find_errors_in_file(self, path: str) -> Dict[str, Any]:
+        """Search a local file for lines mentioning 'error' or 'exception' and return matches."""
+        target = self._normalize_path(path or "")
+        if not self._is_safe_path(target):
+            return {"status": "error", "message": "File access is restricted to safe local folders.", "path": target}
+        try:
+            matches = []
+            with open(target, "r", encoding="utf-8", errors="ignore") as f:
+                for i, line in enumerate(f, start=1):
+                    if re.search(r"error|exception|traceback", line, re.IGNORECASE):
+                        matches.append({"line": i, "text": line.strip()})
+            return {"status": "ok", "path": target, "matches": matches, "total_matches": len(matches)}
+        except Exception as e:
+            logger.error(f"Find errors error: {e}")
+            return {"status": "error", "message": str(e), "path": target}
 
     async def close_application(self, process_name: str) -> Dict[str, Any]:
         """Close an application by process name."""

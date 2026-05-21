@@ -101,6 +101,7 @@ class DesktopRequest(BaseModel):
     window_action: Optional[str] = None
     window_title: Optional[str] = None
     browser_action: Optional[str] = None
+    power_action: Optional[str] = None
 
 
 class DesktopResponse(BaseModel):

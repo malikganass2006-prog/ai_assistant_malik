@@ -1596,6 +1596,54 @@ function detectDesktopAutomation(text){
     return {action:'run_command', command: command || trimmed};
   }
 
+  // Type into an app: "Type 'Hello world' in Notepad"
+  const typeMatch = trimmed.match(/^type\s+["'](.+?)["']\s+(?:in|into)\s+(.+)$/i);
+  if(typeMatch){
+    const keys = typeMatch[1];
+    const app = typeMatch[2];
+    return {action:'open_application', app_name: app.trim(), keys: keys};
+  }
+
+  // Switch to app / open music apps
+  if(/^(switch to|open|focus)\s+(spotify|music|player)\b/i.test(trimmed)){
+    return {action:'open_application', app_name: 'spotify'};
+  }
+
+  // Increase volume (best-effort)
+  if(/\b(increase|raise|turn up)\s+(the\s+)?volume\b/i.test(trimmed)){
+    return {action:'keyboard_control', keyboard_action:'press', keys:'volumeup'};
+  }
+
+  // Click Save -> send Ctrl+S
+  if(/\b(click|press|hit)\s+(the\s+)?save\s*(button)?\b/i.test(lower)){
+    return {action:'keyboard_control', keyboard_action:'hotkey', keys:'ctrl+s'};
+  }
+
+  // System power actions require confirmation
+  if(/\b(shutdown|shut down|power off|turn off)\b/i.test(lower)){
+    if(!confirm('Confirm power action: shut down the PC?')) return null;
+    return {action:'system_power', power_action:'shutdown'};
+  }
+  if(/\b(restart|reboot)\b/i.test(lower)){
+    if(!confirm('Confirm power action: restart the PC?')) return null;
+    return {action:'system_power', power_action:'restart'};
+  }
+  if(/\b(sleep|suspend)\b/i.test(lower)){
+    if(!confirm('Confirm power action: put PC to sleep?')) return null;
+    return {action:'system_power', power_action:'sleep'};
+  }
+  if(/\b(lock|lock the screen|lock pc)\b/i.test(lower)){
+    if(!confirm('Confirm power action: lock the PC?')) return null;
+    return {action:'system_power', power_action:'lock'};
+  }
+
+  // Find errors in code file: "find my code error file-name"
+  const findMatch = trimmed.match(/find\s+(?:my\s+)?(?:code\s+)?(?:error|errors)\s+(?:in|from|file)\s+(?:"([^"]+)"|'([^']+)'|([^\s]+))/i);
+  if(findMatch){
+    const target = findMatch[1]||findMatch[2]||findMatch[3];
+    return {action:'find_errors', path: target};
+  }
+
   return null;
 }
 

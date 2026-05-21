@@ -452,5 +452,51 @@
       "content": "Control Panel is now open. What would you like to do next?",
       "timestamp": "2026-05-21T12:35:34.742028"
     }
+  ],
+  "TQPJQH": [
+    {
+      "role": "user",
+      "content": "open control panel",
+      "timestamp": "2026-05-21T19:08:39.908764"
+    },
+    {
+      "role": "assistant",
+      "content": "I can help you with that. To open the Control Panel, I'll need to simulate a keyboard shortcut. Before I do that, please confirm: Would you like me to open the Control Panel on your desktop?",
+      "timestamp": "2026-05-21T19:08:41.266586"
+    }
+  ],
+  "68W1YD": [
+    {
+      "role": "user",
+      "content": "open copilot",
+      "timestamp": "2026-05-21T19:09:40.325480"
+    },
+    {
+      "role": "assistant",
+      "content": "I'm opening GitHub Copilot for you. Would you like to access it through the web or a specific IDE like Visual Studio?",
+      "timestamp": "2026-05-21T19:09:41.580666"
+    },
+    {
+      "role": "user",
+      "content": "open it",
+      "timestamp": "2026-05-21T19:10:57.668124"
+    },
+    {
+      "role": "assistant",
+      "content": "I'm opening GitHub Copilot in your default browser. Please wait while it loads. Would you like me to log in for you or create a new session?",
+      "timestamp": "2026-05-21T19:10:59.358071"
+    }
+  ],
+  "JL6LAW": [
+    {
+      "role": "user",
+      "content": "hi",
+      "timestamp": "2026-05-21T19:32:45.368900"
+    },
+    {
+      "role": "assistant",
+      "content": "Hello. How can I assist you today?",
+      "timestamp": "2026-05-21T19:32:46.251661"
+    }
   ]
 }

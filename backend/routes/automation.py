@@ -21,9 +21,17 @@ async def desktop_action(request: DesktopRequest):
         elif request.action == "open_path":
             result = await desktop_service.open_path(request.path or "")
         elif request.action == "open_application":
-            result = await desktop_service.open_application(request.app_name or "", request.path or "")
+            # support optional 'keys' to open and then type
+            if request.keys:
+                result = await desktop_service.open_application_and_type(request.app_name or "", request.keys or "")
+            else:
+                result = await desktop_service.open_application(request.app_name or "", request.path or "")
         elif request.action == "close_application":
             result = await desktop_service.close_application(request.process_name or "")
+        elif request.action == "system_power":
+            result = await desktop_service.system_power(request.power_action or "")
+        elif request.action == "find_errors":
+            result = await desktop_service.find_errors_in_file(request.path or "")
         elif request.action == "browser_automation":
             result = await desktop_service.browser_automation(request.browser_action or "open", request.url or "")
         elif request.action == "mouse_control":
