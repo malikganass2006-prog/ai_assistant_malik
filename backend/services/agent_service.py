@@ -64,10 +64,10 @@ class AutonomousAgentService:
         prompt = (
             "You are a local assistant that can plan safe desktop tasks. "
             "When the user requests a desktop action, respond with a numbered action plan. "
-            "Each action should be one of: run_command, list_directory, read_file, open_url, open_path. "
+            "Each action should be one of: run_command, list_directory, read_file, open_url, open_path, open_application, close_application, browser_automation, mouse_control, keyboard_control, manage_window. "
             "If the request is not a desktop automation task, respond with a short explanation.\n\n"
             f"User request: {instruction}\n\n"
-            "Plan:" 
+            "Plan:"
         )
 
         response = await llm_service.generate_response({
@@ -91,7 +91,11 @@ class AutonomousAgentService:
             action_type, payload = map(str.strip, line.split(':', 1))
             action_type = action_type.lower().replace(' ', '_')
             action = {"type": action_type, "payload": payload}
-            if action_type in ["run_command", "list_directory", "read_file", "open_url", "open_path"]:
+            if action_type in [
+                "run_command", "list_directory", "read_file", "open_url", "open_path",
+                "open_application", "close_application", "browser_automation",
+                "mouse_control", "keyboard_control", "manage_window",
+            ]:
                 actions.append(action)
         return actions
 
@@ -116,6 +120,14 @@ class AutonomousAgentService:
         if any(keyword in text for keyword in ["open url", "visit", "go to", "open website"]):
             url = self._extract_url(instruction) or instruction
             return [{"type": "open_url", "payload": url}]
+
+        if any(keyword in text for keyword in ["open calculator", "open calc", "open notepad", "launch notepad", "launch calc", "open chrome", "open firefox", "open browser", "open code"]):
+            app = self._extract_quoted_text(instruction) or instruction
+            return [{"type": "open_application", "payload": app}]
+
+        if any(keyword in text for keyword in ["close notepad", "close calc", "close firefox", "close chrome", "terminate process", "kill process"]):
+            target = self._extract_quoted_text(instruction) or instruction
+            return [{"type": "close_application", "payload": target}]
 
         if any(keyword in text for keyword in ["open folder", "open path", "explorer", "open directory"]):
             path = self._extract_path(instruction) or self._extract_quoted_text(instruction) or "."
@@ -153,6 +165,61 @@ class AutonomousAgentService:
             return await desktop_service.open_url(payload)
         if action_type == "open_path":
             return await desktop_service.open_path(payload)
+        if action_type == "open_application":
+            return await desktop_service.open_application(payload)
+        if action_type == "close_application":
+            return await desktop_service.close_application(payload)
+        if action_type == "browser_automation":
+            if not payload or not isinstance(payload, str):
+                return {"status": "error", "message": "Browser automation payload is required."}
+            query = payload.strip()
+            if query.startswith("http://") or query.startswith("https://") or query.startswith("www."):
+                return await desktop_service.browser_automation("open", query)
+            if query.lower().startswith("search "):
+                return await desktop_service.browser_automation("search", query[7:].strip())
+            return await desktop_service.browser_automation("search", query)
+        if action_type == "mouse_control":
+            action = "click"
+            if isinstance(payload, str):
+                lower = payload.lower()
+                if "move" in lower:
+                    action = "move"
+                elif "double" in lower:
+                    action = "double_click"
+                elif "right" in lower:
+                    action = "right_click"
+                elif "scroll" in lower:
+                    action = "scroll"
+            x = None
+            y = None
+            if isinstance(payload, str):
+                match = re.search(r'(-?\d+)\s*,?\s*(-?\d+)', payload)
+                if match:
+                    x = int(match.group(1))
+                    y = int(match.group(2))
+            return await desktop_service.mouse_control(action, x, y)
+        if action_type == "keyboard_control":
+            if isinstance(payload, str):
+                lower = payload.lower()
+                if lower.startswith("press "):
+                    return await desktop_service.keyboard_control("press", payload[6:].strip())
+                if lower.startswith("hotkey "):
+                    return await desktop_service.keyboard_control("hotkey", payload[7:].strip())
+            return await desktop_service.keyboard_control("type", payload)
+        if action_type == "manage_window":
+            if isinstance(payload, str):
+                lower = payload.lower()
+                if lower.startswith("minimize"):
+                    return await desktop_service.manage_window("minimize", payload[8:].strip())
+                if lower.startswith("maximize"):
+                    return await desktop_service.manage_window("maximize", payload[8:].strip())
+                if lower.startswith("restore"):
+                    return await desktop_service.manage_window("restore", payload[7:].strip())
+                if lower.startswith("close"):
+                    return await desktop_service.manage_window("close", payload[5:].strip())
+                if lower.startswith("activate"):
+                    return await desktop_service.manage_window("activate", payload[8:].strip())
+            return await desktop_service.manage_window("activate", payload)
 
         return {"status": "skipped", "message": f"Unsupported action type: {action_type}", "raw_payload": payload}
 

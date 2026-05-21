@@ -1552,26 +1552,41 @@ function useChip(text){ document.getElementById('msg-in').value=text; send(); }
 function detectDesktopAutomation(text){
   const trimmed=text.trim();
   const lower=trimmed.toLowerCase();
-
   const urlMatch = trimmed.match(/(https?:\/\/[^\s]+|www\.[^\s]+\.[^\s]+)/i);
+
+  if(/^(search|google|find)\b/.test(lower)){
+    const query = trimmed.replace(/^(search|google|find)\s*/i, '').trim();
+    return {action:'browser_automation', browser_action:'search', url: query};
+  }
+
   if(/^(open|visit|go to)\b/.test(lower) && urlMatch){
     return {action:'open_url', url:urlMatch[0]};
   }
 
+  if(/^(open|launch|start)\s+(calculator|calc|notepad|paint|code|visual studio code|browser|chrome|firefox|terminal|cmd|powershell)\b/i.test(trimmed)){
+    const appName = trimmed.replace(/^(open|launch|start)\s+/i, '').trim();
+    return {action:'open_application', app_name: appName};
+  }
+
+  if(/^(close|terminate|stop|kill)\s+(.+)$/i.test(trimmed)){
+    const processName = trimmed.replace(/^(close|terminate|stop|kill)\s+/i, '').trim();
+    return {action:'close_application', process_name: processName};
+  }
+
   if(/^(list|show)\s+(files|directory|folder)\b/.test(lower)){
-    const pathMatch = trimmed.match(/\b(?:in|at|path)\s+(?:"([^"]+)"|'([^']+)'|([^\s]+))/i);
+    const pathMatch = trimmed.match(/\b(?:in|at|path)\s+(?:"([^\"]+)"|'([^']+)'|([^\s]+))/i);
     const target = pathMatch ? (pathMatch[1]||pathMatch[2]||pathMatch[3]) : '.';
     return {action:'list_directory', path: target};
   }
 
   if(/^(read|open)\s+file\b/.test(lower)){
-    const pathMatch = trimmed.match(/\b(?:file|from|path)\s+(?:"([^"]+)"|'([^']+)'|([^\s]+))/i);
+    const pathMatch = trimmed.match(/\b(?:file|from|path)\s+(?:"([^\"]+)"|'([^']+)'|([^\s]+))/i);
     const target = pathMatch ? (pathMatch[1]||pathMatch[2]||pathMatch[3]) : '';
     return {action:'read_file', path: target};
   }
 
   if(/^(open|show)\s+(folder|directory|path)\b/.test(lower)){
-    const pathMatch = trimmed.match(/\b(?:folder|directory|path)\s+(?:"([^"]+)"|'([^']+)'|([^\s]+))/i);
+    const pathMatch = trimmed.match(/\b(?:folder|directory|path)\s+(?:"([^\"]+)"|'([^']+)'|([^\s]+))/i);
     const target = pathMatch ? (pathMatch[1]||pathMatch[2]||pathMatch[3]) : '.';
     return {action:'open_path', path: target};
   }
@@ -1612,6 +1627,18 @@ async function sendDesktopCommand(text, automation, typingId){
         command: automation.command || undefined,
         path: automation.path || undefined,
         url: automation.url || undefined,
+        app_name: automation.app_name || undefined,
+        process_name: automation.process_name || undefined,
+        browser_action: automation.browser_action || undefined,
+        mouse_action: automation.mouse_action || undefined,
+        keyboard_action: automation.keyboard_action || undefined,
+        x: automation.x,
+        y: automation.y,
+        button: automation.button || undefined,
+        clicks: automation.clicks,
+        keys: automation.keys || undefined,
+        window_action: automation.window_action || undefined,
+        window_title: automation.window_title || undefined,
       }),
     }, 60000);
 

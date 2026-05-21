@@ -7,8 +7,16 @@ import os
 import re
 import sys
 import subprocess
+import urllib.parse
 import webbrowser
 from typing import Any, Dict, Optional
+
+try:
+    import pyautogui
+    PYAUTOGUI_AVAILABLE = True
+except Exception:
+    pyautogui = None
+    PYAUTOGUI_AVAILABLE = False
 
 logger = logging.getLogger("malik.desktop_service")
 
@@ -35,6 +43,11 @@ class DesktopService:
             "date",
             "time",
         }
+        self.safe_apps = {
+            "notepad", "notepad.exe", "calc", "calc.exe", "mspaint", "mspaint.exe",
+            "explorer", "explorer.exe", "code", "code.exe", "chrome", "chrome.exe",
+            "firefox", "firefox.exe", "python", "python.exe",
+        }
 
     def _normalize_path(self, path: str) -> str:
         return os.path.abspath(path or "")
@@ -42,6 +55,20 @@ class DesktopService:
     def _is_safe_path(self, path: str) -> bool:
         target = self._normalize_path(path)
         return any(target == base or target.startswith(base + os.sep) for base in self.safe_dirs)
+
+    def _is_safe_app(self, app_name: str) -> bool:
+        if not app_name or not isinstance(app_name, str):
+            return False
+        cleaned = os.path.basename(app_name).strip().lower()
+        if re.search(r"[;&|><`\\\n\r]", cleaned):
+            return False
+        return cleaned in self.safe_apps
+
+    def _is_safe_mouse_keyboard(self, action: str) -> bool:
+        return action in {"move", "click", "double_click", "right_click", "scroll", "type", "press", "hotkey"}
+
+    def _is_safe_window_action(self, action: str) -> bool:
+        return action in {"minimize", "maximize", "restore", "close", "activate"}
 
     def _is_safe_command(self, command: str) -> bool:
         if not command or not isinstance(command, str):
@@ -142,6 +169,161 @@ class DesktopService:
         except Exception as e:
             logger.error(f"Open path error: {e}")
             return {"status": "error", "message": str(e), "path": target}
+
+    async def open_application(self, app_name: str = "", path: str = "") -> Dict[str, Any]:
+        """Open a desktop application by name or executable path."""
+        if path:
+            target = self._normalize_path(path)
+            if not (self._is_safe_path(target) or self._is_safe_app(target)):
+                return {"status": "error", "message": "Application path is not permitted.", "path": target}
+            try:
+                if self.platform.startswith("win"):
+                    os.startfile(target)
+                elif self.platform.startswith("darwin"):
+                    subprocess.Popen(["open", target])
+                else:
+                    subprocess.Popen([target])
+                return {"status": "ok", "action": "open_application", "path": target}
+            except Exception as e:
+                logger.error(f"Open application error: {e}")
+                return {"status": "error", "message": str(e), "path": target}
+
+        if app_name:
+            if not self._is_safe_app(app_name):
+                return {"status": "error", "message": "Application name is not permitted.", "app_name": app_name}
+            try:
+                if self.platform.startswith("win"):
+                    subprocess.Popen(app_name, shell=True)
+                else:
+                    subprocess.Popen(app_name.split())
+                return {"status": "ok", "action": "open_application", "app_name": app_name}
+            except Exception as e:
+                logger.error(f"Open application error: {e}")
+                return {"status": "error", "message": str(e), "app_name": app_name}
+
+        return {"status": "error", "message": "No application name or path provided."}
+
+    async def close_application(self, process_name: str) -> Dict[str, Any]:
+        """Close an application by process name."""
+        if not process_name or not isinstance(process_name, str):
+            return {"status": "error", "message": "Process name is required."}
+        cleaned = process_name.strip()
+        if re.search(r"[;&|><`\\\n\r]", cleaned):
+            return {"status": "error", "message": "Invalid process name."}
+        try:
+            if self.platform.startswith("win"):
+                result = subprocess.run(["taskkill", "/IM", cleaned, "/F"], capture_output=True, text=True)
+            else:
+                result = subprocess.run(["pkill", "-f", cleaned], capture_output=True, text=True)
+            return {
+                "status": "ok" if result.returncode == 0 else "error",
+                "action": "close_application",
+                "process_name": cleaned,
+                "stdout": result.stdout.strip(),
+                "stderr": result.stderr.strip(),
+                "returncode": result.returncode,
+            }
+        except Exception as e:
+            logger.error(f"Close application error: {e}")
+            return {"status": "error", "message": str(e), "process_name": cleaned}
+
+    async def browser_automation(self, action: str, url: str = "") -> Dict[str, Any]:
+        """Perform simple browser automation like opening or searching."""
+        if not action:
+            return {"status": "error", "message": "Browser action is required."}
+        try:
+            action = action.strip().lower()
+            if action in {"open", "navigate", "open_url", "go"} and url:
+                return await self.open_url(url)
+            if action in {"search", "google", "find"} and url:
+                query = urllib.parse.quote_plus(url)
+                webbrowser.open(f"https://www.google.com/search?q={query}")
+                return {"status": "ok", "action": "browser_automation", "browser_action": action, "query": url}
+            return {"status": "error", "message": f"Unsupported browser action: {action}"}
+        except Exception as e:
+            logger.error(f"Browser automation error: {e}")
+            return {"status": "error", "message": str(e)}
+
+    async def mouse_control(
+        self,
+        action: str,
+        x: Optional[int] = None,
+        y: Optional[int] = None,
+        button: str = "left",
+        clicks: int = 1,
+    ) -> Dict[str, Any]:
+        """Perform mouse control using pyautogui if available."""
+        if not PYAUTOGUI_AVAILABLE:
+            return {"status": "error", "message": "Mouse control requires pyautogui. Install it to enable this feature."}
+        if not action or not self._is_safe_mouse_keyboard(action):
+            return {"status": "error", "message": "Unsupported mouse action."}
+        try:
+            if action == "move":
+                pyautogui.moveTo(x or pyautogui.position().x, y or pyautogui.position().y, duration=0.2)
+            elif action == "click":
+                pyautogui.click(x=x, y=y, clicks=clicks, button=button)
+            elif action == "double_click":
+                pyautogui.doubleClick(x=x, y=y, button=button)
+            elif action == "right_click":
+                pyautogui.click(x=x, y=y, clicks=1, button="right")
+            elif action == "scroll":
+                pyautogui.scroll(clicks)
+            else:
+                return {"status": "error", "message": "Unsupported mouse action."}
+            return {"status": "ok", "action": "mouse_control", "mouse_action": action, "x": x, "y": y, "button": button, "clicks": clicks}
+        except Exception as e:
+            logger.error(f"Mouse control error: {e}")
+            return {"status": "error", "message": str(e)}
+
+    async def keyboard_control(self, action: str, keys: str = "") -> Dict[str, Any]:
+        """Perform keyboard control using pyautogui if available."""
+        if not PYAUTOGUI_AVAILABLE:
+            return {"status": "error", "message": "Keyboard control requires pyautogui. Install it to enable this feature."}
+        if not action or not self._is_safe_mouse_keyboard(action):
+            return {"status": "error", "message": "Unsupported keyboard action."}
+        try:
+            if action == "type":
+                pyautogui.write(keys or "", interval=0.05)
+            elif action == "press":
+                pyautogui.press(keys or "enter")
+            elif action == "hotkey":
+                pyautogui.hotkey(*[k.strip() for k in (keys or "").split("+") if k.strip()])
+            else:
+                return {"status": "error", "message": "Unsupported keyboard action."}
+            return {"status": "ok", "action": "keyboard_control", "keyboard_action": action, "keys": keys}
+        except Exception as e:
+            logger.error(f"Keyboard control error: {e}")
+            return {"status": "error", "message": str(e)}
+
+    async def manage_window(self, action: str, title: Optional[str] = None) -> Dict[str, Any]:
+        """Manage windows using pyautogui if available."""
+        if not PYAUTOGUI_AVAILABLE:
+            return {"status": "error", "message": "Window management requires pyautogui. Install it to enable this feature."}
+        if not action or not self._is_safe_window_action(action):
+            return {"status": "error", "message": "Unsupported window action."}
+        try:
+            window = None
+            if title:
+                windows = pyautogui.getWindowsWithTitle(title)
+                window = windows[0] if windows else None
+            else:
+                window = pyautogui.getActiveWindow()
+            if not window:
+                return {"status": "error", "message": "No matching window found."}
+            if action == "minimize":
+                window.minimize()
+            elif action == "maximize":
+                window.maximize()
+            elif action == "restore":
+                window.restore()
+            elif action == "close":
+                window.close()
+            elif action == "activate":
+                window.activate()
+            return {"status": "ok", "action": "window_management", "window_action": action, "title": title}
+        except Exception as e:
+            logger.error(f"Window management error: {e}")
+            return {"status": "error", "message": str(e), "window_action": action, "title": title}
 
 
 # Singleton instance

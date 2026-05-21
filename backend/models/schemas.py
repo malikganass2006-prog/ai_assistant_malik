@@ -89,6 +89,18 @@ class DesktopRequest(BaseModel):
     command: Optional[str] = None
     path: Optional[str] = None
     url: Optional[str] = None
+    app_name: Optional[str] = None
+    process_name: Optional[str] = None
+    mouse_action: Optional[str] = None
+    keyboard_action: Optional[str] = None
+    x: Optional[int] = None
+    y: Optional[int] = None
+    button: Optional[str] = None
+    clicks: Optional[int] = None
+    keys: Optional[str] = None
+    window_action: Optional[str] = None
+    window_title: Optional[str] = None
+    browser_action: Optional[str] = None
 
 
 class DesktopResponse(BaseModel):

@@ -7,3 +7,4 @@ python-dotenv==1.0.1
 gtts==2.5.1
 pillow==10.4.0
 aiofiles==24.1.0
+pyautogui==0.9.55

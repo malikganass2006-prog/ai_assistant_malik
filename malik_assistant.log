@@ -136,3 +136,7 @@
 2026-05-21 01:32:01,781 [INFO] malik.chat_router: Multimodal context built: intent=greeting, has_image=False, history_len=2
 2026-05-21 01:32:02,801 [INFO] httpx: HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
 2026-05-21 01:32:02,836 [INFO] malik.chat_router: Request processed in 1.07s
+2026-05-21 16:23:22,896 [INFO] malik.main: Malik AI Assistant starting up...
+2026-05-21 16:23:22,904 [INFO] malik.main: Environment: production
+2026-05-21 16:24:09,641 [INFO] httpx: HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-05-21 16:32:18,678 [INFO] malik.main: Malik AI Assistant shutting down...
