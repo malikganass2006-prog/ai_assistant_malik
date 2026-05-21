@@ -1,7 +1,7 @@
 """Memory route"""
 from fastapi import APIRouter
-from backend.models.schemas import MemoryRequest, MemoryResponse
-from backend.services.memory_service import memory_service
+from models.schemas import MemoryRequest, MemoryResponse
+from services.memory_service import memory_service
 
 router = APIRouter()
 

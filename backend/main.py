@@ -13,13 +13,13 @@ from fastapi.responses import FileResponse
 import uvicorn
 import os
 
-from backend.routes.chat import router as chat_router
-from backend.routes.voice import router as voice_router
-from backend.routes.vision import router as vision_router
-from backend.routes.memory import router as memory_router
-from backend.routes.automation import router as automation_router
-from backend.routes.agent import router as agent_router
-from backend.config import settings
+from routes.chat import router as chat_router
+from routes.voice import router as voice_router
+from routes.vision import router as vision_router
+from routes.memory import router as memory_router
+from routes.automation import router as automation_router
+from routes.agent import router as agent_router
+from config import settings
 
 # Configure logging
 logging.basicConfig(

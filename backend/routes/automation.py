@@ -2,8 +2,8 @@
 
 from fastapi import APIRouter, HTTPException
 
-from backend.models.schemas import DesktopRequest, DesktopResponse
-from backend.services.desktop_service import desktop_service
+from models.schemas import DesktopRequest, DesktopResponse
+from services.desktop_service import desktop_service
 
 router = APIRouter()
 

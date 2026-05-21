@@ -3,8 +3,8 @@
 import logging
 from fastapi import APIRouter, HTTPException
 
-from backend.models.schemas import AgentRequest, AgentResponse
-from backend.services.agent_service import agent_service
+from models.schemas import AgentRequest, AgentResponse
+from services.agent_service import agent_service
 
 logger = logging.getLogger("malik.agent_router")
 router = APIRouter()

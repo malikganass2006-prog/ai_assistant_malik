@@ -44,9 +44,17 @@ class DesktopService:
             "time",
         }
         self.safe_apps = {
-            "notepad", "notepad.exe", "calc", "calc.exe", "mspaint", "mspaint.exe",
-            "explorer", "explorer.exe", "code", "code.exe", "chrome", "chrome.exe",
-            "firefox", "firefox.exe", "python", "python.exe",
+            "notepad", "notepad.exe", "calc", "calc.exe", "calculator", "mspaint", "mspaint.exe",
+            "explorer", "explorer.exe", "code", "code.exe", "vscode", "visual studio code",
+            "chrome", "chrome.exe", "firefox", "firefox.exe", "python", "python.exe",
+            "browser", "cmd", "powershell", "terminal",
+        }
+        self.app_aliases = {
+            "calculator": "calc",
+            "browser": "chrome",
+            "vscode": "code",
+            "visual studio code": "code",
+            "terminal": "cmd",
         }
 
     def _normalize_path(self, path: str) -> str:
@@ -189,14 +197,18 @@ class DesktopService:
                 return {"status": "error", "message": str(e), "path": target}
 
         if app_name:
-            if not self._is_safe_app(app_name):
+            target_name = app_name.strip().lower()
+            actual = self.app_aliases.get(target_name, target_name)
+            if not self._is_safe_app(actual):
                 return {"status": "error", "message": "Application name is not permitted.", "app_name": app_name}
             try:
                 if self.platform.startswith("win"):
-                    subprocess.Popen(app_name, shell=True)
+                    subprocess.Popen(actual, shell=True)
+                elif self.platform.startswith("darwin"):
+                    subprocess.Popen(["open", actual])
                 else:
-                    subprocess.Popen(app_name.split())
-                return {"status": "ok", "action": "open_application", "app_name": app_name}
+                    subprocess.Popen(actual.split())
+                return {"status": "ok", "action": "open_application", "app_name": actual}
             except Exception as e:
                 logger.error(f"Open application error: {e}")
                 return {"status": "error", "message": str(e), "app_name": app_name}

@@ -10,11 +10,11 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 import json
 
-from backend.models.schemas import ChatRequest, ChatResponse, MultimodalContext
-from backend.services.llm_service import llm_service
-from backend.services.vision_service import vision_service
-from backend.services.tts_service import tts_service
-from backend.services.memory_service import memory_service
+from models.schemas import ChatRequest, ChatResponse, MultimodalContext
+from services.llm_service import llm_service
+from services.vision_service import vision_service
+from services.tts_service import tts_service
+from services.memory_service import memory_service
 
 logger = logging.getLogger("malik.chat_router")
 router = APIRouter()

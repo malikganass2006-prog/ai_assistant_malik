@@ -1,7 +1,7 @@
 """Vision route"""
 from fastapi import APIRouter
-from backend.models.schemas import VisionRequest, VisionResponse
-from backend.services.vision_service import vision_service
+from models.schemas import VisionRequest, VisionResponse
+from services.vision_service import vision_service
 
 router = APIRouter()
 
