@@ -1,0 +1,15 @@
+<div class="overlay" id="power-confirm-overlay">
+  <div class="modal confirm-modal">
+    <div class="modal-head">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+      </svg>
+      Confirm System Action
+    </div>
+    <p id="power-confirm-text">Are you sure you want to perform this system action?</p>
+    <div class="modal-acts">
+      <button class="mbtn" onclick="cancelPowerAction()">Cancel</button>
+      <button class="mbtn danger" id="power-confirm-yes" onclick="confirmPowerAction()">Confirm</button>
+    </div>
+  </div>
+</div>

@@ -922,6 +922,23 @@ html,body{height:100%;overflow:hidden;background:var(--void);color:var(--ink1);f
   </div>
 </div>
 
+<!-- Power confirm modal -->
+<div class="overlay" id="power-confirm-overlay">
+  <div class="modal confirm-modal">
+    <div class="modal-head">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+      </svg>
+      Confirm System Action
+    </div>
+    <p id="power-confirm-text">Are you sure you want to perform this system action?</p>
+    <div class="modal-acts">
+      <button class="mbtn" onclick="cancelPowerAction()">Cancel</button>
+      <button class="mbtn danger" id="power-confirm-yes" onclick="confirmPowerAction()">Confirm</button>
+    </div>
+  </div>
+</div>
+
 <!-- Shortcuts modal -->
 <div class="overlay" id="shortcuts-overlay">
   <div class="modal shortcuts-modal">
@@ -979,6 +996,7 @@ const S = {
   allHistory:  [],      // flat log for history panel
   conversations:[],     // sidebar list
   currentConv: null,
+  pendingPowerAction: null, // {automation, text, typingId}
 };
 
 function uid(){ return Math.random().toString(36).slice(2,8).toUpperCase() }
@@ -1619,22 +1637,18 @@ function detectDesktopAutomation(text){
     return {action:'keyboard_control', keyboard_action:'hotkey', keys:'ctrl+s'};
   }
 
-  // System power actions require confirmation
+  // System power actions: return require_confirmation and a confirmation message
   if(/\b(shutdown|shut down|power off|turn off)\b/i.test(lower)){
-    if(!confirm('Confirm power action: shut down the PC?')) return null;
-    return {action:'system_power', power_action:'shutdown'};
+    return {action:'system_power', power_action:'shutdown', require_confirmation:true, confirm_message:'Shut down the PC now?'};
   }
   if(/\b(restart|reboot)\b/i.test(lower)){
-    if(!confirm('Confirm power action: restart the PC?')) return null;
-    return {action:'system_power', power_action:'restart'};
+    return {action:'system_power', power_action:'restart', require_confirmation:true, confirm_message:'Restart the PC now?'};
   }
   if(/\b(sleep|suspend)\b/i.test(lower)){
-    if(!confirm('Confirm power action: put PC to sleep?')) return null;
-    return {action:'system_power', power_action:'sleep'};
+    return {action:'system_power', power_action:'sleep', require_confirmation:true, confirm_message:'Put the PC to sleep?'};
   }
   if(/\b(lock|lock the screen|lock pc)\b/i.test(lower)){
-    if(!confirm('Confirm power action: lock the PC?')) return null;
-    return {action:'system_power', power_action:'lock'};
+    return {action:'system_power', power_action:'lock', require_confirmation:true, confirm_message:'Lock the PC now?'};
   }
 
   // Find errors in code file: "find my code error file-name"
@@ -1663,6 +1677,15 @@ function normalizeAssistantCommand(text){
 
 async function sendDesktopCommand(text, automation, typingId){
   if(S.busy) return;
+
+  // If the detected action requires confirmation (power actions), open the modal and TTS the prompt
+  if(automation && automation.require_confirmation){
+    S.pendingPowerAction = {automation, text, typingId};
+    openPowerConfirm(automation.confirm_message || 'Please confirm this system action.');
+    if(S.speak) speakText(automation.confirm_message || 'Please confirm this system action.');
+    return;
+  }
+
   S.busy=true; setStatus('thinking');
   document.getElementById('send-btn').disabled=true;
 
@@ -2004,6 +2027,32 @@ function showShortcuts(){ openModal('shortcuts-overlay'); }
 document.querySelectorAll('.overlay').forEach(el=>{
   el.addEventListener('click',e=>{ if(e.target===el) el.classList.remove('open'); });
 });
+
+// Power confirmation modal helpers
+function openPowerConfirm(msg){
+  const el=document.getElementById('power-confirm-text');
+  if(el) el.textContent = msg;
+  document.getElementById('power-confirm-overlay').classList.add('open');
+}
+
+function cancelPowerAction(){
+  S.pendingPowerAction = null;
+  closeModal('power-confirm-overlay');
+  toast('Action cancelled');
+}
+
+async function confirmPowerAction(){
+  const pending = S.pendingPowerAction;
+  if(!pending){ closeModal('power-confirm-overlay'); return; }
+  closeModal('power-confirm-overlay');
+  // perform the desktop command
+  const {automation, text, typingId} = pending;
+  S.pendingPowerAction = null;
+  // speak confirmation
+  if(S.speak) speakText('Confirmed. Executing now.');
+  // small delay to let TTS start
+  setTimeout(()=> sendDesktopCommand(text, automation, typingId), 300);
+}
 
 /* ══════════════════════════════════════════════════════════════
    TOAST

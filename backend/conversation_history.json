@@ -558,5 +558,47 @@
       "content": "I'd be happy to explain each line of the code. However, please note that the code is quite long, and explaining each line individually might be a bit tedious.\n\nThat being said, I'll break down the code into sections and explain each part. Here's the code with explanations:\n\n**Importing Libraries**\n```python\nimport logging\nimport asyncio\nfrom contextlib import asynccontextmanager\nfrom fastapi import FastAPI, HTTPException\nfrom fastapi.middleware.cors import CORSMiddleware\nfrom fastapi.staticfiles import StaticFiles\nfrom fastapi.responses import FileResponse\nimport uvicorn\nimport os\n```\nThese lines import the necessary libraries for the project. This includes logging, asyncio, FastAPI, and other libraries for building the backend.\n\n**Configuring Logging**\n```python\nlogging.basicConfig(\n    level=logging.INFO,\n    format=\"%(asctime)s [%(levelname)s] %(name)s: %(message)s\",\n    handlers=[\n        logging.StreamHandler(),\n        logging.FileHandler(\"malik_assistant.log\")\n    ]\n)\nlogger = logging.getLogger(\"malik.main\")\n```\nThese lines configure the logging settings for the project. This includes setting the log level to INFO, specifying the log format, and defining the log handlers (stream handler and file handler).\n\n**Defining the Application Lifespan**\n```python\n@asynccontextmanager\nasync def lifespan(app: FastAPI):\n    \"\"\"Application lifespan manager\"\"\"\n    logger.info(\"Malik AI Assistant starting up...\")\n    logger.info(f\"Environment: {settings.ENVIRONMENT}\")\n    yield\n    logger.info(\"Malik AI Assistant shutting down...\")\n```\nThis code defines an asynchronous context manager for the application's lifespan. This manager logs messages when the application starts up and shuts down.\n\n**Creating the FastAPI Application**\n```python\napp = FastAPI(\n    title=\"Malik AI Assistant\",\n    description=\"Production-grade Multimodal AI Assistant with Voice, Vision, and Context Intelligence\",\n    version=\"1.0.0\",\n    lifespan=lifespan\n)\n```\nThis line creates a new FastAPI application instance. The title, description, and version are specified, and the lifespan manager is set to the one defined earlier.\n\n**Configuring CORS Middleware**\n```python\napp.add_middleware(\n    CORSMiddleware,\n    allow_origins=[\"*\"],\n    allow_credentials=True,\n    allow_methods=[\"*\"],\n    allow_headers=[\"*\"],\n)\n```\nThis code adds CORS middleware to the application. This allows cross-origin requests from any origin, with any credentials, methods, and headers.\n\n**Registering Routers**\n```python\napp.include_router(chat_router, prefix=\"/api/chat\", tags=[\"Chat\"])\napp.include_router(voice_router, prefix=\"/api/voice\", tags=[\"Voice\"])\napp.include_router(vision_router, prefix=\"/api/vision\", tags=[\"Vision\"])\napp.include_router(memory_router, prefix=\"/api/memory\", tags=[\"Memory\"])\napp.include_router(automation_router, prefix=\"/api/automation\", tags=[\"Desktop Automation\"])\napp.include_router(agent_router, prefix=\"/api/agent\", tags=[\"Agent\"])\n```\nThese lines register the various routers for the application. Each router is assigned a prefix and tags for documentation purposes.\n\n**Serving Frontend Static Files**\n```python\nfrontend_path = os.path.join(os.path.dirname(__file__), \"..\", \"frontend\")\nif os.path.exists(frontend_path):\n    app.mount(\"/static\", StaticFiles(directory=frontend_path), name=\"static\")\n```\nThis code checks if the frontend directory exists, and if so, mounts it as a static file server for the application.\n\n**Defining Routes**\n```python\n@app.get(\"/\")\nasync def serve_frontend():\n    \"\"\"Serve the main frontend application\"\"\"\n    index_path = os.path.join(frontend_path, \"index.html\")\n    if os.path.exists(index_path):\n        return FileResponse(index_path)\n    return {\"message\": \"Malik AI Assistant API\", \"status\": \"running\", \"version\": \"1.0.0\"}\n\n@app.get(\"/health\")\nasync def health_check():\n    \"\"\"Health check endpoint\"\"\"\n    return {\n        \"status\": \"healthy\",\n        \"service\": \"Malik AI Assistant\",\n        \"version\": \"1.0.0\"\n    }\n\n@app.get(\"/api/config\")\nasync def get_config():\n    \"\"\"Get frontend configuration\"\"\"\n    return {\n        \"tts_enabled\": True,\n        \"stt_enabled\": True,\n        \"vision_enabled\": True,\n        \"supported_languages\": [\"en\", \"ur\"],\n        \"max_image_size_mb\": 10,\n        \"models\": {\n            \"llm\": settings.LLM_MODEL,\n            \"vision\": \"vision-capable\"\n        }\n    }\n```\nThese lines define the routes for the application. The root route serves the frontend application, the health check route returns a health check response, and the config route returns the frontend configuration.\n\n**Running the Application**\n```python\nif __name__ == \"__main__\":\n    uvicorn.run(\n        \"backend.main:app\",\n        host=settings.HOST,\n        port=settings.PORT,\n        reload=settings.DEBUG,\n        log_level=\"info\"\n    )\n```\nThis code runs the application using Uvicorn. The host, port, and log level are set based on the settings.\n\nI hope this explanation helps! Let me know if you have any further questions.",
       "timestamp": "2026-05-21T19:40:11.665412"
     }
+  ],
+  "PCJPQ8": [
+    {
+      "role": "user",
+      "content": "Explain how neural networks learn",
+      "timestamp": "2026-05-21T20:10:36.164049"
+    },
+    {
+      "role": "assistant",
+      "content": "Neural networks learn through a process called backpropagation. They're trained on data, adjusting weights and biases to minimize errors. This process is repeated, allowing the network to learn patterns and make predictions. Would you like me to elaborate on the steps involved?",
+      "timestamp": "2026-05-21T20:10:37.436086"
+    },
+    {
+      "role": "user",
+      "content": "what can you do",
+      "timestamp": "2026-05-21T20:11:15.811356"
+    },
+    {
+      "role": "assistant",
+      "content": "I can assist with tasks like answering questions, providing information, setting reminders, and more. I can also help with language translation, image analysis, and basic math calculations. How can I help you today?",
+      "timestamp": "2026-05-21T20:11:16.712079"
+    },
+    {
+      "role": "user",
+      "content": "what are you do in setting reminders",
+      "timestamp": "2026-05-21T20:11:54.454331"
+    },
+    {
+      "role": "assistant",
+      "content": "When setting reminders, I can help you create and manage reminders for events, appointments, or tasks. I can also send you notifications at a specified time or date. Would you like to set a reminder for something specific?",
+      "timestamp": "2026-05-21T20:11:55.232908"
+    },
+    {
+      "role": "user",
+      "content": "give notifications after a 1 mint",
+      "timestamp": "2026-05-21T20:13:01.956488"
+    },
+    {
+      "role": "assistant",
+      "content": "I'll set a reminder to notify you in 1 minute. Would you like me to remind you of something specific or just send a general notification?",
+      "timestamp": "2026-05-21T20:13:02.757157"
+    }
   ]
 }
